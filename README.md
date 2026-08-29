@@ -39,19 +39,20 @@ DonateConnect is a modern, full-stack web application connecting generous donors
 
 ### 2. Backend Setup (`backend/`)
 
-1. **Configure Database**:
-   Create a PostgreSQL database named `donateconnect`:
-   ```sql
-   CREATE DATABASE donateconnect;
-   ```
+1. **Database Configuration (Neon PostgreSQL)**:
+   The application is configured to use **Neon (Serverless PostgreSQL)** in the cloud.
 
 2. **Environment Variables**:
-   Set environment variables or update `application.properties`:
+   Create a `.env` file inside the `backend/` directory with your Neon credentials and configuration:
    ```properties
-   DB_URL=jdbc:postgresql://localhost:5432/donateconnect
-   DB_USERNAME=postgres
-   DB_PASSWORD=postgres
-   JWT_SECRET=donateConnectSecretKey32BytesLongString123!
+   DB_URL=jdbc:postgresql://<your-neon-url>.aws.neon.tech/neondb?sslmode=require
+   DB_USERNAME=<your-username>
+   DB_PASSWORD=<your-password>
+   DB_DRIVER=org.postgresql.Driver
+   DB_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+   
+   JWT_SECRET=your_jwt_secret_key_here
+   JWT_EXPIRATION_MS=86400000
    ```
 
 3. **Run Backend**:
