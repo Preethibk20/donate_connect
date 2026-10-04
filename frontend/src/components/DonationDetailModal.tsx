@@ -19,6 +19,8 @@ import {
   MessageSquare,
   Navigation,
   Image as ImageIcon,
+  MapPin,
+  Clock as ClockIcon,
 } from 'lucide-react';
 
 interface DonationDetailModalProps {
@@ -282,16 +284,40 @@ export const DonationDetailModal: React.FC<DonationDetailModalProps> = ({
                     Pickup Schedule
                   </span>
                   {donation.pickupDate ? (
-                    <span className="text-xs font-bold flex items-center gap-1.5 text-[#111827]">
-                      <Calendar className="w-3.5 h-3.5 text-[#7567E8]" />
-                      {donation.pickupDate}
-                    </span>
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold flex items-center gap-1.5 text-[#111827]">
+                        <Calendar className="w-3.5 h-3.5 text-[#7567E8]" />
+                        {donation.pickupDate}
+                      </span>
+                      {donation.pickupTimeSlot && (
+                        <span className="text-xs font-bold flex items-center gap-1.5 text-[#111827]">
+                          <ClockIcon className="w-3.5 h-3.5 text-[#7567E8]" />
+                          {donation.pickupTimeSlot.replace(/_/g, ' ')}
+                        </span>
+                      )}
+                    </div>
                   ) : (
                     <span className="text-xs text-[#6B7280]">No date specified</span>
                   )}
                 </div>
               </div>
             </div>
+
+            {/* Pickup Location Info */}
+            {donation.pickupAddress && (
+              <div className="p-4 rounded-xl border border-[#E5E7EB] bg-white space-y-2 shadow-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 text-[#4B5563]">
+                  <MapPin className="w-3.5 h-3.5 text-[#7567E8]" />
+                  Pickup Address
+                </span>
+                <p className="text-sm text-[#111827] font-semibold">{donation.pickupAddress}</p>
+                {donation.pickupLat && donation.pickupLng && (
+                  <p className="text-xs text-[#6B7280]">
+                    GPS: {donation.pickupLat.toFixed(6)}, {donation.pickupLng.toFixed(6)}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Description */}
             <div className="space-y-1.5">

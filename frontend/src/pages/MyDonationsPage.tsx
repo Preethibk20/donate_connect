@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getMyDonations } from '../api/donationApi';
 import { Donation, DonationStatus, PageResponse } from '../types';
 import { formatDate } from '../utils/formatters';
@@ -23,10 +23,15 @@ import {
   PackageCheck,
   Eye,
   AlertTriangle,
+  Star,
+  Download
 } from 'lucide-react';
+import { RatingModal } from '../components/RatingModal';
+import { CertificateModal } from '../components/CertificateModal';
 
 export const MyDonationsPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [pageData, setPageData] = useState<PageResponse<Donation> | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +46,8 @@ export const MyDonationsPage: React.FC = () => {
   // Selected Donation for Modals
   const [activeChatDonation, setActiveChatDonation] = useState<Donation | null>(null);
   const [activeTrackerDonation, setActiveTrackerDonation] = useState<Donation | null>(null);
+  const [activeRatingDonation, setActiveRatingDonation] = useState<Donation | null>(null);
+  const [activeCertDonation, setActiveCertDonation] = useState<Donation | null>(null);
   const [detailDonationId, setDetailDonationId] = useState<string | null>(null);
 
   const fetchDonations = async (currentPage = page, pageSize = size) => {
@@ -286,13 +293,33 @@ export const MyDonationsPage: React.FC = () => {
                         >
                           <Eye className="w-4 h-4 text-[#7567E8]" />
                         </button>
-                        <button
-                          onClick={() => setActiveTrackerDonation(donation)}
-                          className="p-2 rounded-lg transition-colors border bg-[#7567E8]/10 hover:bg-[#7567E8]/20 text-[#7567E8] border-[#7567E8]/20"
-                          title="Live Driver GPS"
-                        >
-                          <Navigation className="w-4 h-4 text-[#7567E8]" />
-                        </button>
+                        {donation.status === 'PICKED_UP' && (
+                          <button
+                            onClick={() => navigate(`/donations/${donation.id}/track`)}
+                            className="p-2 rounded-lg transition-colors border bg-[#7567E8]/10 hover:bg-[#7567E8]/20 text-[#7567E8] border-[#7567E8]/20"
+                            title="Live Driver GPS"
+                          >
+                            <Navigation className="w-4 h-4 text-[#7567E8]" />
+                          </button>
+                        )}
+                        {donation.status === 'DELIVERED' && (
+                          <>
+                            <button
+                              onClick={() => setActiveCertDonation(donation)}
+                              className="p-2 rounded-lg transition-colors border bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border-emerald-200 shadow-sm flex items-center gap-1"
+                              title="Download Certificate"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setActiveRatingDonation(donation)}
+                              className="p-2 rounded-lg transition-colors border bg-amber-50 hover:bg-amber-100 text-amber-600 border-amber-200 shadow-sm flex items-center gap-1"
+                              title="Rate Experience"
+                            >
+                              <Star className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => setActiveChatDonation(donation)}
                           className="p-2 rounded-lg transition-colors border bg-white hover:bg-[#F4F2FA] text-[#111827] border-[#E5E7EB] shadow-sm"
@@ -357,13 +384,15 @@ export const MyDonationsPage: React.FC = () => {
                     <Eye className="w-3.5 h-3.5 text-[#7567E8]" />
                     Inspect
                   </button>
-                  <button
-                    onClick={() => setActiveTrackerDonation(donation)}
-                    className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl text-xs font-bold border bg-[#7567E8]/10 hover:bg-[#7567E8]/20 text-[#7567E8] border-[#7567E8]/20"
-                  >
-                    <Navigation className="w-3.5 h-3.5 text-[#7567E8]" />
-                    GPS
-                  </button>
+                  {donation.status === 'PICKED_UP' && (
+                    <button
+                      onClick={() => navigate(`/donations/${donation.id}/track`)}
+                      className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl text-xs font-bold border bg-[#7567E8]/10 hover:bg-[#7567E8]/20 text-[#7567E8] border-[#7567E8]/20"
+                    >
+                      <Navigation className="w-3.5 h-3.5 text-[#7567E8]" />
+                      GPS
+                    </button>
+                  )}
                   <button
                     onClick={() => setActiveChatDonation(donation)}
                     className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl text-xs font-bold border bg-white hover:bg-[#F4F2FA] text-[#111827] border-[#E5E7EB] shadow-sm"
@@ -371,6 +400,24 @@ export const MyDonationsPage: React.FC = () => {
                     <MessageSquare className="w-3.5 h-3.5 text-[#4B5563]" />
                     Chat
                   </button>
+                  {donation.status === 'DELIVERED' && (
+                    <div className="col-span-full grid grid-cols-2 gap-2 mt-1">
+                      <button
+                        onClick={() => setActiveCertDonation(donation)}
+                        className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl text-xs font-bold border bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border-emerald-200 shadow-sm"
+                      >
+                        <Download className="w-3.5 h-3.5 text-emerald-600" />
+                        Certificate
+                      </button>
+                      <button
+                        onClick={() => setActiveRatingDonation(donation)}
+                        className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl text-xs font-bold border bg-amber-50 hover:bg-amber-100 text-amber-600 border-amber-200 shadow-sm"
+                      >
+                        <Star className="w-3.5 h-3.5 text-amber-600" />
+                        Rate
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -435,6 +482,25 @@ export const MyDonationsPage: React.FC = () => {
           driverName="Vikram Singh (Volunteer Logistics)"
           driverPhone="+91 98765 43210"
           onClose={() => setActiveTrackerDonation(null)}
+        />
+      )}
+
+      {/* Rating Modal */}
+      {activeRatingDonation && (
+        <RatingModal
+          donation={activeRatingDonation}
+          onClose={() => setActiveRatingDonation(null)}
+          onSuccess={() => {
+            fetchDonations();
+          }}
+        />
+      )}
+
+      {/* Certificate Modal */}
+      {activeCertDonation && (
+        <CertificateModal
+          donation={activeCertDonation}
+          onClose={() => setActiveCertDonation(null)}
         />
       )}
 

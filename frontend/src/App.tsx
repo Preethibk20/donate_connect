@@ -22,10 +22,13 @@ import { AdminOverviewPage } from './pages/AdminOverviewPage';
 import { AdminNgosPage } from './pages/AdminNgosPage';
 import { AdminDonationsPage } from './pages/AdminDonationsPage';
 import { AdminProfilePage } from './pages/AdminProfilePage';
+import { AdminAuditLogPage } from './pages/AdminAuditLogPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DonorProfilePage } from './pages/DonorProfilePage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
+import { TrackDeliveryPage } from './pages/TrackDeliveryPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { EmergencySosBanner } from './components/EmergencySosBanner';
 
@@ -51,12 +54,18 @@ const AppShell: React.FC = () => {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
+              {/* Protected Routes (Shared) */}
+              <Route element={<ProtectedRoute allowedRoles={['DONOR', 'NGO', 'VOLUNTEER', 'ADMIN', 'CORPORATE']} />}>
+                <Route path="/notifications" element={<NotificationsPage />} />
+              </Route>
+
               {/* Protected Donor Routes */}
               <Route element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']} />}>
                 <Route path="/donor/profile" element={<DonorProfilePage />} />
                 <Route path="/donate/new" element={<CreateDonationPage />} />
                 <Route path="/donations/new" element={<Navigate to="/donate/new" replace />} />
                 <Route path="/donations" element={<MyDonationsPage />} />
+                <Route path="/donations/:id/track" element={<TrackDeliveryPage />} />
                 <Route path="/my-donations" element={<Navigate to="/donations" replace />} />
               </Route>
 
@@ -83,6 +92,7 @@ const AppShell: React.FC = () => {
                 <Route path="/admin/profile" element={<AdminProfilePage />} />
                 <Route path="/admin/ngos" element={<AdminNgosPage />} />
                 <Route path="/admin/donations" element={<AdminDonationsPage />} />
+                <Route path="/admin/audit" element={<AdminAuditLogPage />} />
               </Route>
             </Routes>
           </main>

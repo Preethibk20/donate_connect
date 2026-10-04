@@ -27,3 +27,13 @@ export const updateVolunteerTaskStatus = async (
   );
   return response.data.data;
 };
+
+export const sendLocationUpdate = async (deliveryId: string, locationData: any) => {
+  const response = await apiClient.post(`/deliveries/${deliveryId}/location`, locationData);
+  return response.data;
+};
+
+export const addVolunteerRating = async (volunteerId: string, dto: import('../types').CreateRatingRequest): Promise<import('../types').VolunteerRating> => {
+  const response = await apiClient.post<ApiResponse<import('../types').VolunteerRating>>(`/volunteer/${volunteerId}/ratings`, dto);
+  return response.data.data;
+};

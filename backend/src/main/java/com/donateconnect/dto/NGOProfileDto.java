@@ -18,7 +18,14 @@ public class NGOProfileDto {
     private String name;
     private String description;
     private String address;
+    private String city;
     private String phone;
+    private Double latitude;
+    private Double longitude;
+    private Double distanceKm; // Added for frontend distance display
+    private java.util.List<NgoUrgentNeedDto> urgentNeeds;
     private boolean verified;
+    private Double averageRating;
+    private Integer ratingCount;
     private LocalDateTime createdAt;
 }

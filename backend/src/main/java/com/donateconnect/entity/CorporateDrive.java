@@ -9,7 +9,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "corporate_drives")
+@Table(name = "corporate_drives", indexes = {
+    @Index(name = "idx_corporate_drive_user", columnList = "corporate_user_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor

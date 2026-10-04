@@ -39,4 +39,20 @@ public class EmailService {
             throw new RuntimeException("Failed to send email. Please check your Brevo SMTP configuration.");
         }
     }
+
+    public void sendNotificationEmail(String toEmail, String subject, String body) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(body);
+            
+            mailSender.send(message);
+            log.info("Notification email sent successfully to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send notification email to {}", toEmail, e);
+            // Don't throw exception, just log it so it doesn't break the main flow
+        }
+    }
 }

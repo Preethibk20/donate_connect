@@ -18,4 +18,6 @@ public class CreateUrgentNeedRequest {
 
     @NotNull(message = "Category is required")
     private Category category;
+
+    private Integer quantity;
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getNgoById } from '../api/ngoApi';
 import { NGOProfile } from '../types';
-import { Building2, ShieldCheck, MapPin, Phone, Mail, ArrowLeft, HeartHandshake, Calendar } from 'lucide-react';
+import { Building2, ShieldCheck, MapPin, Phone, Mail, ArrowLeft, HeartHandshake, Calendar, Star } from 'lucide-react';
 import { formatDate } from '../utils/formatters';
 
 export const NgoDetailPage: React.FC = () => {
@@ -74,6 +74,17 @@ export const NgoDetailPage: React.FC = () => {
               <p className="text-slate-400 text-xs mt-1">
                 Registered Partner &bull; Member since {formatDate(ngo.createdAt)}
               </p>
+              <div className="flex items-center gap-2 mt-2">
+                {(ngo.averageRating ?? 0) > 0 ? (
+                  <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-lg">
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <span className="text-amber-500 font-bold text-sm">{ngo.averageRating?.toFixed(1)}</span>
+                    <span className="text-amber-500/60 text-xs">({ngo.ratingCount} reviews)</span>
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-500 bg-slate-800/50 px-2 py-1 rounded-lg">No reviews yet</div>
+                )}
+              </div>
             </div>
           </div>
 

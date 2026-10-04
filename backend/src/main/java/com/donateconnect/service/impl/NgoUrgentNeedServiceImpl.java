@@ -61,6 +61,7 @@ public class NgoUrgentNeedServiceImpl implements NgoUrgentNeedService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .category(request.getCategory())
+                .quantity(request.getQuantity())
                 .active(true)
                 .build();
 
@@ -114,6 +115,7 @@ public class NgoUrgentNeedServiceImpl implements NgoUrgentNeedService {
                 .title(u.getTitle())
                 .description(u.getDescription())
                 .category(u.getCategory())
+                .quantity(u.getQuantity())
                 .active(u.isActive())
                 .createdAt(u.getCreatedAt())
                 .build();

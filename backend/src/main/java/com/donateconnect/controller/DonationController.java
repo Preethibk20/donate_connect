@@ -8,6 +8,7 @@ import com.donateconnect.entity.User;
 import com.donateconnect.exception.ResourceNotFoundException;
 import com.donateconnect.repository.UserRepository;
 import com.donateconnect.service.DonationService;
+import com.donateconnect.service.AuditLogService;
 import com.donateconnect.service.StorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class DonationController {
     private final DonationService donationService;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final AuditLogService auditLogService;
 
     // ==================== DONOR ENDPOINTS ====================
 
@@ -98,6 +100,7 @@ public class DonationController {
     ) {
         UUID ngoUserId = getUserIdFromAuth(authentication);
         DonationResponseDto updated = donationService.updateDonationStatus(ngoUserId, id, dto.getStatus());
+        auditLogService.logAction("UPDATE_DONATION_STATUS", "DONATION", id.toString(), "NGO updated donation status to " + dto.getStatus());
         return ResponseEntity.ok(ApiResponse.success("Donation status updated successfully", updated));
     }
 

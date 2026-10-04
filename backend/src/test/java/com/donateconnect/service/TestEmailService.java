@@ -1,11 +1,13 @@
 package com.donateconnect.service;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
+@Disabled("Requires real SMTP credentials")
 public class TestEmailService {
 
     @Autowired

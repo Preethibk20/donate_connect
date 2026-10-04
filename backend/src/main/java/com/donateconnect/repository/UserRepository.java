@@ -13,5 +13,5 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
     long countByRole(Role role);
-    java.util.List<User> findByApprovedFalse();
+    org.springframework.data.domain.Page<User> findByApprovedFalse(org.springframework.data.domain.Pageable pageable);
 }

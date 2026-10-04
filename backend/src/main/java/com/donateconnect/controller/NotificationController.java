@@ -46,6 +46,13 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success("Notification marked as read", null));
     }
 
+    @GetMapping("/unread-count")
+    public ResponseEntity<ApiResponse<Long>> getUnreadCount(Authentication authentication) {
+        User currentUser = resolveUser(authentication);
+        long count = notificationService.getUnreadCount(currentUser.getId());
+        return ResponseEntity.ok(ApiResponse.success("Unread count fetched", count));
+    }
+
     private User resolveUser(Authentication auth) {
         return userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found"));

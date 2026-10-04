@@ -9,3 +9,8 @@ export const getMyNotifications = async (): Promise<NotificationItem[]> => {
 export const markNotificationRead = async (id: string): Promise<void> => {
   await apiClient.patch(`/notifications/${id}/read`);
 };
+
+export const getUnreadCount = async (): Promise<number> => {
+  const response = await apiClient.get<ApiResponse<number>>('/notifications/unread-count');
+  return response.data.data;
+};

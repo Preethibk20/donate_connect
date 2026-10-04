@@ -25,6 +25,10 @@ public class DonationResponseDto {
     private List<String> photoUrls;
     private DonationStatus status;
     private LocalDate pickupDate;
+    private String pickupTimeSlot;
+    private String pickupAddress;
+    private Double pickupLat;
+    private Double pickupLng;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

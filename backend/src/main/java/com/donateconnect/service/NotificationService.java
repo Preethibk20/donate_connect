@@ -9,6 +9,8 @@ import java.util.UUID;
 
 public interface NotificationService {
     void createNotification(User recipient, String message, UUID relatedDonationId);
+    void notifyUser(User recipient, String message, UUID relatedDonationId, boolean sendEmail);
     Page<NotificationDto> getUserNotifications(UUID userId, Pageable pageable);
     void markAsRead(UUID notificationId, UUID userId);
+    long getUnreadCount(UUID userId);
 }

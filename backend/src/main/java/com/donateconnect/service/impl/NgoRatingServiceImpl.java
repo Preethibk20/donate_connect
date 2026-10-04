@@ -51,6 +51,13 @@ public class NgoRatingServiceImpl implements NgoRatingService {
                 .build();
 
         NgoRating saved = ratingRepository.save(rating);
+
+        Double avg = ratingRepository.findAverageRatingByNgoId(ngo.getId());
+        long count = ratingRepository.countByNgoId(ngo.getId());
+        ngo.setAverageRating(avg != null ? Math.round(avg * 10.0) / 10.0 : 5.0);
+        ngo.setRatingCount((int) count);
+        ngoProfileRepository.save(ngo);
+
         return mapToDto(saved);
     }
 
@@ -59,6 +66,22 @@ public class NgoRatingServiceImpl implements NgoRatingService {
     public Double getAverageRating(UUID ngoId) {
         Double avg = ratingRepository.findAverageRatingByNgoId(ngoId);
         return avg != null ? Math.round(avg * 10.0) / 10.0 : 5.0;
+    }
+
+    @Override
+    @Transactional
+    public void deleteRating(UUID ratingId) {
+        NgoRating rating = ratingRepository.findById(ratingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Rating not found"));
+        
+        NGOProfile ngo = rating.getNgo();
+        ratingRepository.delete(rating);
+
+        Double avg = ratingRepository.findAverageRatingByNgoId(ngo.getId());
+        long count = ratingRepository.countByNgoId(ngo.getId());
+        ngo.setAverageRating(avg != null ? Math.round(avg * 10.0) / 10.0 : 5.0);
+        ngo.setRatingCount((int) count);
+        ngoProfileRepository.save(ngo);
     }
 
     private NgoRatingDto mapToDto(NgoRating r) {

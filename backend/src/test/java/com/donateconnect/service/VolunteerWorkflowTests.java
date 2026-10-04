@@ -99,7 +99,7 @@ class VolunteerWorkflowTests {
                 .user(ngoUser)
                 .name("Test NGO")
                 .description("Test NGO Description")
-                .address("123 Test Street")
+                .address("123 Bangalore Street")
                 .phone("1234567890")
                 .verified(true)
                 .build());

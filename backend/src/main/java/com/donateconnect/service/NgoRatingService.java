@@ -11,4 +11,5 @@ public interface NgoRatingService {
     Page<NgoRatingDto> getRatingsByNgoId(UUID ngoId, Pageable pageable);
     NgoRatingDto addRating(UUID ngoId, UUID donorUserId, CreateRatingRequest request);
     Double getAverageRating(UUID ngoId);
+    void deleteRating(UUID ratingId);
 }

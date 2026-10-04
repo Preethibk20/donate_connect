@@ -56,6 +56,10 @@ public class AuthServiceImpl implements AuthService {
             if (request.getAddress() == null || request.getPhone() == null) {
                 throw new IllegalArgumentException("Address and Phone are required for NGO registration.");
             }
+            String lowerAddress = request.getAddress().toLowerCase();
+            if (!lowerAddress.contains("bengaluru") && !lowerAddress.contains("bangalore")) {
+                throw new IllegalArgumentException("We currently only accept NGOs operating in the Bengaluru region.");
+            }
             NGOProfile ngoProfile = NGOProfile.builder()
                     .user(savedUser)
                     .name(request.getFullName().trim())
@@ -65,6 +69,11 @@ public class AuthServiceImpl implements AuthService {
                     .verified(false)
                     .build();
             ngoProfileRepository.save(ngoProfile);
+        } else if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
+            String lowerAddress = request.getAddress().toLowerCase();
+            if (!lowerAddress.contains("bengaluru") && !lowerAddress.contains("bangalore")) {
+                throw new IllegalArgumentException("We currently only operate in the Bengaluru region.");
+            }
         }
 
         // Generate and save OTP
@@ -155,6 +164,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole())
+                .averageRating(user.getAverageRating())
+                .ratingCount(user.getRatingCount())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

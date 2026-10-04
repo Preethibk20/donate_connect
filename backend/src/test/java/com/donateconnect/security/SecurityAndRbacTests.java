@@ -42,6 +42,9 @@ class SecurityAndRbacTests {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.donateconnect.service.EmailService emailService;
+
     private User donorUser;
     private User adminUser;
     private User ngoUser;
@@ -110,7 +113,7 @@ class SecurityAndRbacTests {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.token").isNotEmpty())
+                .andExpect(jsonPath("$.data.requiresOtp").value(true))
                 .andExpect(jsonPath("$.data.user.role").value("DONOR"));
     }
 

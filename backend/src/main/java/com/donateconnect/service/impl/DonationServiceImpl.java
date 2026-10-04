@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.donateconnect.service.GeocodingService;
+
 @Service
 @RequiredArgsConstructor
 public class DonationServiceImpl implements DonationService {
@@ -33,6 +35,7 @@ public class DonationServiceImpl implements DonationService {
     private final UserRepository userRepository;
     private final StatusHistoryRepository statusHistoryRepository;
     private final NotificationService notificationService;
+    private final GeocodingService geocodingService;
 
     @Override
     @Transactional
@@ -47,6 +50,11 @@ public class DonationServiceImpl implements DonationService {
             throw new IllegalArgumentException("Cannot donate to an unverified NGO");
         }
 
+        String lowerAddress = request.getPickupAddress().toLowerCase();
+        if (!lowerAddress.contains("bengaluru") && !lowerAddress.contains("bangalore")) {
+            throw new IllegalArgumentException("We currently only accept donations originating from the Bengaluru region.");
+        }
+
         Donation donation = Donation.builder()
                 .donor(donor)
                 .ngo(ngo)
@@ -55,6 +63,10 @@ public class DonationServiceImpl implements DonationService {
                 .photoUrls(request.getPhotoUrls() != null ? request.getPhotoUrls() : List.of())
                 .status(DonationStatus.REQUESTED)
                 .pickupDate(request.getPickupDate())
+                .pickupTimeSlot(request.getPickupTimeSlot())
+                .pickupAddress(request.getPickupAddress())
+                .pickupLat(request.getPickupLat())
+                .pickupLng(request.getPickupLng())
                 .build();
 
         Donation saved = donationRepository.save(donation);
@@ -128,10 +140,12 @@ public class DonationServiceImpl implements DonationService {
         statusHistoryRepository.save(history);
 
         // Send Notification to Donor User
-        notificationService.createNotification(
+        boolean isKeyUpdate = newStatus == DonationStatus.ACCEPTED || newStatus == DonationStatus.REJECTED;
+        notificationService.notifyUser(
                 donation.getDonor(),
                 "Your donation request (" + donation.getCategory() + ") status was updated to: " + newStatus,
-                donation.getId()
+                donation.getId(),
+                isKeyUpdate
         );
 
         return mapToDto(updated);
@@ -169,6 +183,13 @@ public class DonationServiceImpl implements DonationService {
                 .build();
 
         NGOProfile ngo = d.getNgo();
+        if (ngo.getLatitude() == null || ngo.getLongitude() == null) {
+            NGOProfile geocoded = geocodingService.geocodeAndCacheNgoAddress(ngo);
+            if (geocoded != null) {
+                ngo = geocoded;
+            }
+        }
+
         User ngoUser = ngo.getUser();
         UserResponseDto ngoUserDto = UserResponseDto.builder()
                 .id(ngoUser.getId())
@@ -185,6 +206,8 @@ public class DonationServiceImpl implements DonationService {
                 .description(ngo.getDescription())
                 .address(ngo.getAddress())
                 .phone(ngo.getPhone())
+                .latitude(ngo.getLatitude())
+                .longitude(ngo.getLongitude())
                 .verified(ngo.isVerified())
                 .createdAt(ngo.getCreatedAt())
                 .build();
@@ -198,6 +221,10 @@ public class DonationServiceImpl implements DonationService {
                 .photoUrls(d.getPhotoUrls())
                 .status(d.getStatus())
                 .pickupDate(d.getPickupDate())
+                .pickupTimeSlot(d.getPickupTimeSlot())
+                .pickupAddress(d.getPickupAddress())
+                .pickupLat(d.getPickupLat())
+                .pickupLng(d.getPickupLng())
                 .createdAt(d.getCreatedAt())
                 .updatedAt(d.getUpdatedAt())
                 .build();

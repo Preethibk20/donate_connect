@@ -2,8 +2,22 @@ import { apiClient } from './client';
 import { ApiResponse, CreateNgoRequest, CreateRatingRequest, CreateUrgentNeedRequest, ImpactMetrics, NGOProfile, NgoRating, NgoUrgentNeed, PageResponse, UpdateNgoProfileDto } from '../types';
 
 // Public / Donor APIs
-export const getVerifiedNgos = async (): Promise<NGOProfile[]> => {
-  const response = await apiClient.get<ApiResponse<NGOProfile[]>>('/ngo');
+export const getVerifiedNgos = async (params?: {
+  category?: string;
+  city?: string;
+  needsRightNow?: boolean;
+  donorLat?: number;
+  donorLng?: number;
+}): Promise<NGOProfile[]> => {
+  const queryParams = new URLSearchParams();
+  if (params?.category) queryParams.append('category', params.category);
+  if (params?.city) queryParams.append('city', params.city);
+  if (params?.needsRightNow) queryParams.append('needsRightNow', 'true');
+  if (params?.donorLat) queryParams.append('donorLat', params.donorLat.toString());
+  if (params?.donorLng) queryParams.append('donorLng', params.donorLng.toString());
+
+  const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+  const response = await apiClient.get<ApiResponse<NGOProfile[]>>(`/ngo${queryString}`);
   return response.data.data;
 };
 

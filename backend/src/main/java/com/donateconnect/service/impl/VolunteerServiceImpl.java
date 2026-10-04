@@ -146,6 +146,8 @@ public class VolunteerServiceImpl implements VolunteerService {
                 .description(ngo.getDescription())
                 .address(ngo.getAddress())
                 .phone(ngo.getPhone())
+                .latitude(ngo.getLatitude())
+                .longitude(ngo.getLongitude())
                 .verified(ngo.isVerified())
                 .createdAt(ngo.getCreatedAt())
                 .build();

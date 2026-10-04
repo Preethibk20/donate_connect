@@ -82,3 +82,36 @@ export const getAdminDonations = async (
   const response = await apiClient.get<ApiResponse<PageResponse<Donation>>>(`/admin/donations?${params.toString()}`);
   return response.data.data;
 };
+
+export const getLiveLocation = async (donationId: string) => {
+  const response = await apiClient.get(`/donations/${donationId}/location`);
+  return response.data.data;
+};
+
+export const completeDelivery = async (id: string, otp: string, proofImage: File): Promise<any> => {
+  const formData = new FormData();
+  formData.append('otp', otp);
+  formData.append('proofImage', proofImage);
+
+  const response = await apiClient.post(`/volunteer/deliveries/${id}/complete`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data.data;
+};
+
+export const getDeliveryByDonationId = async (donationId: string): Promise<any> => {
+  const response = await apiClient.get(`/volunteer/deliveries/donation/${donationId}`);
+  return response.data.data;
+};
+
+export const getDeliveryOtp = async (donationId: string): Promise<string> => {
+  const response = await apiClient.get(`/volunteer/deliveries/donation/${donationId}/otp`);
+  return response.data.data;
+};
+
+export const regenerateDeliveryOtp = async (donationId: string): Promise<string> => {
+  const response = await apiClient.post(`/volunteer/deliveries/donation/${donationId}/otp/regenerate`);
+  return response.data.data;
+};

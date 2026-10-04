@@ -23,10 +23,17 @@ import org.springframework.data.domain.Pageable;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final com.donateconnect.service.EmailService emailService;
 
     @Override
     @Transactional
     public void createNotification(User recipient, String message, UUID relatedDonationId) {
+        notifyUser(recipient, message, relatedDonationId, false);
+    }
+
+    @Override
+    @Transactional
+    public void notifyUser(User recipient, String message, UUID relatedDonationId, boolean sendEmail) {
         Notification notification = Notification.builder()
                 .recipientUser(recipient)
                 .message(message)
@@ -34,6 +41,14 @@ public class NotificationServiceImpl implements NotificationService {
                 .relatedDonationId(relatedDonationId)
                 .build();
         notificationRepository.save(notification);
+
+        if (sendEmail && recipient.getEmail() != null) {
+            String subject = "DonateConnect: Update on Donation";
+            String body = "Hello " + recipient.getFullName() + ",\n\n" + message + "\n\nThank you,\nDonateConnect Team";
+            emailService.sendNotificationEmail(recipient.getEmail(), subject, body);
+        }
+        
+        // TODO: Add push notification logic here in the future
     }
 
     @Override
@@ -55,6 +70,12 @@ public class NotificationServiceImpl implements NotificationService {
 
         notification.setRead(true);
         notificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getUnreadCount(UUID userId) {
+        return notificationRepository.countByRecipientUserIdAndReadFalse(userId);
     }
 
     private NotificationDto mapToDto(Notification notification) {

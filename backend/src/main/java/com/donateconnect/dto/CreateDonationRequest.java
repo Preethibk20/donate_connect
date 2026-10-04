@@ -32,4 +32,15 @@ public class CreateDonationRequest {
 
     @FutureOrPresent(message = "Pickup date must be today or in the future")
     private LocalDate pickupDate;
+
+    private String pickupTimeSlot;
+    
+    @NotBlank(message = "Pickup address is required")
+    private String pickupAddress;
+    
+    @NotNull(message = "Pickup latitude is required")
+    private Double pickupLat;
+    
+    @NotNull(message = "Pickup longitude is required")
+    private Double pickupLng;
 }

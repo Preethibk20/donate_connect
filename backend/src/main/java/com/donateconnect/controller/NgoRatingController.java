@@ -57,4 +57,14 @@ public class NgoRatingController {
                 .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found"));
         return user.getId();
     }
+
+    @DeleteMapping("/{ratingId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteRating(
+            @PathVariable UUID ngoId,
+            @PathVariable UUID ratingId
+    ) {
+        ratingService.deleteRating(ratingId);
+        return ResponseEntity.ok(ApiResponse.success("Rating deleted successfully", null));
+    }
 }

@@ -18,5 +18,7 @@ public class UserResponseDto {
     private String email;
     private String fullName;
     private Role role;
+    private Double averageRating;
+    private Integer ratingCount;
     private LocalDateTime createdAt;
 }

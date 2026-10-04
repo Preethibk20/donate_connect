@@ -4,11 +4,29 @@ export type Category = 'CLOTHES' | 'FOOD' | 'BOOKS' | 'STATIONERY' | 'TOYS' | 'O
 
 export type DonationStatus = 'REQUESTED' | 'ACCEPTED' | 'REJECTED' | 'PICKED_UP' | 'DELIVERED';
 
+export type DeliveryStatus = 'ASSIGNED' | 'ACCEPTED_BY_VOLUNTEER' | 'EN_ROUTE_TO_PICKUP' | 'PICKED_UP' | 'EN_ROUTE_TO_NGO' | 'DELIVERED';
+
+export interface DeliveryDto {
+  id: string;
+  donationId: string;
+  volunteerId: string;
+  status: DeliveryStatus;
+  assignedAt: string;
+  pickedUpAt?: string;
+  deliveredAt?: string;
+  lastLat?: number;
+  lastLng?: number;
+  lastLocationAt?: string;
+  proofImageUrl?: string;
+}
+
 export interface User {
   id: string;
   email: string;
   fullName: string;
   role: Role;
+  averageRating?: number;
+  ratingCount?: number;
   createdAt: string;
 }
 
@@ -17,6 +35,8 @@ export interface RegisterRequest {
   password: string;
   fullName: string;
   role?: Role;
+  address?: string;
+  phone?: string;
 }
 
 export interface LoginRequest {
@@ -41,8 +61,24 @@ export interface NGOProfile {
   name: string;
   description?: string;
   address: string;
+  city?: string;
   phone: string;
+  latitude?: number;
+  longitude?: number;
+  distanceKm?: number;
   verified: boolean;
+  averageRating?: number;
+  ratingCount?: number;
+  urgentNeeds?: NgoUrgentNeed[];
+  createdAt: string;
+}
+
+export interface VolunteerRating {
+  id: string;
+  volunteerId: string;
+  donor: User;
+  rating: number;
+  review?: string;
   createdAt: string;
 }
 
@@ -71,6 +107,10 @@ export interface Donation {
   photoUrls: string[];
   status: DonationStatus;
   pickupDate?: string;
+  pickupTimeSlot?: string;
+  pickupAddress?: string;
+  pickupLat?: number;
+  pickupLng?: number;
   createdAt: string;
   updatedAt?: string;
 }
@@ -81,6 +121,10 @@ export interface CreateDonationRequest {
   description?: string;
   photoUrls?: string[];
   pickupDate?: string;
+  pickupTimeSlot?: string;
+  pickupAddress?: string;
+  pickupLat?: number;
+  pickupLng?: number;
 }
 
 export interface UpdateDonationStatusDto {
@@ -98,6 +142,15 @@ export interface AdminStats {
   verifiedNgos: number;
   pendingRequests: number;
   completedDeliveries: number;
+  
+  donationsByDate?: Record<string, number>;
+  donationsByCategory?: Record<string, number>;
+  donationsByCity?: Record<string, number>;
+  deliverySuccessRate?: number;
+  averageDeliveryTimeHours?: number;
+  
+  topDonors?: { name: string; donations: number }[];
+  topNgos?: { name: string; donations: number }[];
 }
 
 export interface NotificationItem {
@@ -140,6 +193,7 @@ export interface NgoUrgentNeed {
   title: string;
   description: string;
   category: Category;
+  quantity?: number;
   active: boolean;
   createdAt: string;
 }
@@ -148,6 +202,7 @@ export interface CreateUrgentNeedRequest {
   title: string;
   description: string;
   category: Category;
+  quantity?: number;
 }
 
 export interface ImpactMetrics {
@@ -178,6 +233,18 @@ export interface CorporateDrive {
   collectedItemCount: number;
   startDate: string;
   endDate: string;
+  createdAt: string;
+}
+
+export interface AuditLog {
+  id: string;
+  actorEmail: string;
+  actorName: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  details: string;
+  ipAddress: string;
   createdAt: string;
 }
 

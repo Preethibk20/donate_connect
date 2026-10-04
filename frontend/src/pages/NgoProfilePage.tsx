@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { getOwnNgoProfile, updateOwnNgoProfile } from '../api/ngoApi';
-import { NGOProfile, UpdateNgoProfileDto } from '../types';
-import { Building2, ShieldCheck, MapPin, Phone, Save, CheckCircle2 } from 'lucide-react';
+import { getOwnNgoProfile, updateOwnNgoProfile, getOwnUrgentNeeds, createUrgentNeed, toggleUrgentNeed } from '../api/ngoApi';
+import { NGOProfile, UpdateNgoProfileDto, NgoUrgentNeed, CreateUrgentNeedRequest, Category } from '../types';
+import { Building2, ShieldCheck, MapPin, Phone, Save, CheckCircle2, Plus, AlertCircle } from 'lucide-react';
 import { formatDate } from '../utils/formatters';
+
+const CATEGORIES: Category[] = ['FOOD', 'CLOTHES', 'BOOKS', 'STATIONERY', 'TOYS', 'OTHER'];
 
 export const NgoProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<NGOProfile | null>(null);
@@ -11,6 +13,13 @@ export const NgoProfilePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [urgentNeeds, setUrgentNeeds] = useState<NgoUrgentNeed[]>([]);
+  const [newNeedTitle, setNewNeedTitle] = useState('');
+  const [newNeedDesc, setNewNeedDesc] = useState('');
+  const [newNeedCategory, setNewNeedCategory] = useState<Category>('FOOD');
+  const [newNeedQty, setNewNeedQty] = useState('');
+  const [addingNeed, setAddingNeed] = useState(false);
 
   const {
     register,
@@ -36,8 +45,18 @@ export const NgoProfilePage: React.FC = () => {
     }
   };
 
+  const fetchUrgentNeeds = async () => {
+    try {
+      const needs = await getOwnUrgentNeeds();
+      setUrgentNeeds(needs);
+    } catch (err) {
+      console.error("Failed to load urgent needs", err);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
+    fetchUrgentNeeds();
   }, []);
 
   const onSubmit = async (data: UpdateNgoProfileDto) => {
@@ -53,6 +72,39 @@ export const NgoProfilePage: React.FC = () => {
       setError(err.message || 'Failed to update profile.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAddNeed = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNeedTitle) return;
+    
+    setAddingNeed(true);
+    try {
+      const dto: CreateUrgentNeedRequest = {
+        title: newNeedTitle,
+        description: newNeedDesc || newNeedTitle,
+        category: newNeedCategory,
+        quantity: newNeedQty ? parseInt(newNeedQty, 10) : undefined
+      };
+      const created = await createUrgentNeed(dto);
+      setUrgentNeeds([created, ...urgentNeeds]);
+      setNewNeedTitle('');
+      setNewNeedDesc('');
+      setNewNeedQty('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to add need');
+    } finally {
+      setAddingNeed(false);
+    }
+  };
+
+  const handleToggleNeed = async (id: string) => {
+    try {
+      const updated = await toggleUrgentNeed(id);
+      setUrgentNeeds(urgentNeeds.map(n => n.id === id ? updated : n));
+    } catch (err: any) {
+      setError(err.message || 'Failed to toggle need');
     }
   };
 
@@ -185,6 +237,87 @@ export const NgoProfilePage: React.FC = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Urgent Needs Management Section */}
+      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-6">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-rose-400" />
+          Manage Urgent Needs
+        </h2>
+        <p className="text-sm text-slate-400">
+          List items you currently need right now. These will be highlighted to donors searching in your area.
+        </p>
+
+        <form onSubmit={handleAddNeed} className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row gap-4">
+          <div className="flex-1 space-y-3">
+            <input
+              type="text"
+              placeholder="What do you need? (e.g., Blankets, Rice)"
+              value={newNeedTitle}
+              onChange={e => setNewNeedTitle(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+              required
+            />
+            <div className="flex gap-3">
+              <select
+                value={newNeedCategory}
+                onChange={e => setNewNeedCategory(e.target.value as Category)}
+                className="bg-slate-900 border border-slate-800 text-slate-300 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500 flex-1"
+              >
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <input
+                type="number"
+                placeholder="Qty (optional)"
+                value={newNeedQty}
+                onChange={e => setNewNeedQty(e.target.value)}
+                className="w-32 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={addingNeed || !newNeedTitle}
+            className="md:self-start px-4 py-3 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-sm font-bold transition-all border border-rose-500/30 flex items-center gap-2 disabled:opacity-50"
+          >
+            {addingNeed ? 'Adding...' : <><Plus className="w-4 h-4" /> Add Need</>}
+          </button>
+        </form>
+
+        <div className="space-y-3">
+          {urgentNeeds.length === 0 ? (
+            <div className="text-center py-6 text-slate-500 text-sm border border-dashed border-slate-700 rounded-xl">
+              No urgent needs listed.
+            </div>
+          ) : (
+            urgentNeeds.map(need => (
+              <div key={need.id} className={`flex items-center justify-between p-4 rounded-xl border ${need.active ? 'bg-slate-900/50 border-rose-500/30' : 'bg-slate-900/20 border-slate-800 opacity-60'}`}>
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    {need.title}
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                      {need.category}
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Added: {formatDate(need.createdAt)} {need.quantity ? `• Qty: ${need.quantity}` : ''}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleToggleNeed(need.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                    need.active 
+                    ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500 hover:text-white'
+                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-emerald-500/20 hover:text-emerald-400 hover:border-emerald-500/30'
+                  }`}
+                >
+                  {need.active ? 'Deactivate' : 'Reactivate'}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

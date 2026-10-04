@@ -160,6 +160,19 @@ export const NotificationBell: React.FC = () => {
               ))
             )}
           </div>
+
+          {/* View All Link */}
+          <div className="p-2 border-t border-[#E5E7EB] bg-[#F9FAFB] text-center">
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/notifications');
+              }}
+              className="text-xs font-bold text-[#7567E8] hover:text-[#5B4FC2] transition-colors w-full py-1.5"
+            >
+              View all notifications
+            </button>
+          </div>
         </div>
       )}
     </div>

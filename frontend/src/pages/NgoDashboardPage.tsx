@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getNgoAssignedDonations, updateDonationStatusByNgo } from '../api/donationApi';
+import { useNavigate } from 'react-router-dom';
+import { getNgoAssignedDonations, updateDonationStatusByNgo, getDeliveryOtp, regenerateDeliveryOtp } from '../api/donationApi';
 import { Donation, DonationStatus } from '../types';
 import { formatDate } from '../utils/formatters';
 import { LiveDriverTrackerModal } from '../components/LiveDriverTrackerModal';
@@ -16,12 +17,17 @@ import {
   Tag,
   Filter,
   Inbox,
-  Navigation
+  Navigation,
+  KeyRound,
+  Eye,
+  EyeOff,
+  RotateCcw
 } from 'lucide-react';
 
 import { useToast } from '../context/ToastContext';
 
 export const NgoDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +35,8 @@ export const NgoDashboardPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [activeTrackerDonation, setActiveTrackerDonation] = useState<Donation | null>(null);
+  const [otpLoadingId, setOtpLoadingId] = useState<string | null>(null);
+  const [otpData, setOtpData] = useState<Record<string, string>>({});
 
   const fetchDonations = async () => {
     setLoading(true);
@@ -62,6 +70,39 @@ export const NgoDashboardPage: React.FC = () => {
       showError('Status update failed: ' + err.message);
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  const handleFetchOtp = async (id: string) => {
+    if (otpData[id]) {
+      // Toggle off if already fetched
+      const newData = { ...otpData };
+      delete newData[id];
+      setOtpData(newData);
+      return;
+    }
+
+    setOtpLoadingId(id);
+    try {
+      const otp = await getDeliveryOtp(id);
+      setOtpData((prev) => ({ ...prev, [id]: otp }));
+    } catch (err: any) {
+      showError('Failed to fetch OTP: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setOtpLoadingId(null);
+    }
+  };
+
+  const handleRegenerateOtp = async (id: string) => {
+    setOtpLoadingId(id);
+    try {
+      const otp = await regenerateDeliveryOtp(id);
+      setOtpData((prev) => ({ ...prev, [id]: otp }));
+      showSuccess('OTP regenerated successfully');
+    } catch (err: any) {
+      showError('Failed to regenerate OTP: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setOtpLoadingId(null);
     }
   };
 
@@ -235,13 +276,43 @@ export const NgoDashboardPage: React.FC = () => {
                 </div>
 
                 {/* Uber-Style Live GPS Driver Tracking Button */}
-                <button
-                  onClick={() => setActiveTrackerDonation(donation)}
-                  className="w-full py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-xs font-bold border border-indigo-500/30 transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Navigation className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-                  Track Driver Live GPS Location &rarr;
-                </button>
+                {donation.status === 'PICKED_UP' && (
+                  <button
+                    onClick={() => navigate(`/donations/${donation.id}/track`)}
+                    className="w-full py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-xs font-bold border border-indigo-500/30 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <Navigation className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+                    Track Driver Live GPS Location &rarr;
+                  </button>
+                )}
+
+                {/* OTP Viewer */}
+                {donation.status === 'PICKED_UP' && (
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-slate-300 text-xs">
+                      <KeyRound className="w-4 h-4 text-amber-400" />
+                      Verification OTP for Volunteer:
+                    </div>
+                    {otpLoadingId === donation.id ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
+                    ) : otpData[donation.id] ? (
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-lg font-bold text-amber-400 tracking-widest">{otpData[donation.id]}</span>
+                        <button onClick={() => handleRegenerateOtp(donation.id)} title="Regenerate OTP" className="text-amber-500 hover:text-amber-300">
+                          <RotateCcw className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleFetchOtp(donation.id)} className="text-slate-500 hover:text-slate-300">
+                          <EyeOff className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => handleFetchOtp(donation.id)} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        <Eye className="w-3.5 h-3.5" />
+                        Show OTP
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Workflow Actions */}
                 <div className="pt-2 border-t border-slate-800/60 flex items-center gap-2">
@@ -276,13 +347,9 @@ export const NgoDashboardPage: React.FC = () => {
                       Mark Picked Up
                     </button>
                   ) : donation.status === 'PICKED_UP' ? (
-                    <button
-                      onClick={() => handleStatusUpdate(donation.id, 'DELIVERED')}
-                      className="w-full py-2 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white font-semibold text-xs transition-colors border border-emerald-500/30 flex items-center justify-center gap-2"
-                    >
-                      <PackageCheck className="w-4 h-4" />
-                      Mark Delivered
-                    </button>
+                    <div className="w-full py-1.5 text-center text-xs font-semibold text-indigo-400 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                      In Transit - Awaiting Volunteer Delivery
+                    </div>
                   ) : donation.status === 'DELIVERED' ? (
                     <div className="w-full py-1.5 text-center text-xs font-semibold text-emerald-400 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
                       ✓ Complete & Delivered

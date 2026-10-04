@@ -4,6 +4,7 @@ import com.donateconnect.entity.*;
 import com.donateconnect.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
 @RequiredArgsConstructor
 @Slf4j
 public class DataInitializer implements CommandLineRunner {
@@ -29,6 +31,7 @@ public class DataInitializer implements CommandLineRunner {
     private final SmartLockerRepository smartLockerRepository;
     private final BlockchainBlockRepository blockchainBlockRepository;
     private final NgoResourceTradeRepository ngoResourceTradeRepository;
+    private final DeliveryRepository deliveryRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -139,6 +142,24 @@ public class DataInitializer implements CommandLineRunner {
         Donation d1 = createSampleDonation(donorUser, goonjNgo, Category.CLOTHES, "Box of 20 cotton sarees, winter shawls, and children's sweaters in pristine condition.", DonationStatus.REQUESTED, LocalDate.now().plusDays(2));
         Donation d2 = createSampleDonation(donorUser, prathamNgo, Category.BOOKS, "Complete set of NCERT Class 6-10 science textbooks, RD Sharma Mathematics, and Panchatantra story books.", DonationStatus.ACCEPTED, LocalDate.now().plusDays(1));
         Donation d3 = createSampleDonation(donorUser, akshayaPatraNgo, Category.FOOD, "100 kg Basmati rice bags, Toor dal, and refined sunflower oil tins for relief kitchen.", DonationStatus.DELIVERED, LocalDate.now().minusDays(3));
+
+        // Create Sample Deliveries
+        deliveryRepository.save(Delivery.builder()
+                .donation(d3)
+                .volunteer(volunteerUser)
+                .status(DeliveryStatus.DELIVERED)
+                .assignedAt(LocalDateTime.now().minusDays(4))
+                .pickedUpAt(LocalDateTime.now().minusDays(3).minusHours(2))
+                .deliveredAt(LocalDateTime.now().minusDays(3))
+                .proofImageUrl("/images/proof1.jpg")
+                .build());
+
+        deliveryRepository.save(Delivery.builder()
+                .donation(d2)
+                .volunteer(volunteerUser)
+                .status(DeliveryStatus.ASSIGNED)
+                .assignedAt(LocalDateTime.now().minusHours(1))
+                .build());
 
         // 7. Seed Direct Coordination Comments
         commentRepository.save(DonationComment.builder()

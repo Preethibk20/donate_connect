@@ -117,6 +117,9 @@ class IntegrationWorkflowTest {
                 .description("20 cotton shirts and 10 pairs of pants in excellent condition, ready for distribution")
                 .photoUrls(List.of("test-photo.jpg"))
                 .pickupDate(LocalDate.now().plusDays(3))
+                .pickupAddress("123 Bangalore St")
+                .pickupLat(40.7128)
+                .pickupLng(-74.0060)
                 .build();
 
         MvcResult createResult = mockMvc.perform(post("/api/donations")

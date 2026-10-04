@@ -3,7 +3,7 @@ import { getMyVolunteerTasks, getAvailablePickups, claimVolunteerPickup, updateV
 import { Donation, PageResponse, VolunteerTask } from '../types';
 import { useToast } from '../context/ToastContext';
 import { Truck, CheckCircle2, MapPin, Calendar, Clock, RefreshCw, PackageSearch, ChevronRight } from 'lucide-react';
-
+import { LiveLocationTracker } from '../components/LiveLocationTracker';
 type DashboardTab = 'my-tasks' | 'available';
 
 export const DriverDashboardPage: React.FC = () => {
@@ -150,13 +150,17 @@ export const DriverDashboardPage: React.FC = () => {
                     <p className="text-xs text-slate-300 mb-3">{task.donation.description || 'Standard packaged donation.'}</p>
 
                     <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-slate-300">
-                        <MapPin className="w-3.5 h-3.5 text-indigo-400" />
-                        <span><strong>NGO Hub:</strong> {task.donation.ngo?.address}</span>
+                      <div className="flex items-start gap-1.5 text-slate-300">
+                        <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                        <span><strong>Pickup:</strong> {task.donation.pickupAddress || 'Address not provided'}</span>
+                      </div>
+                      <div className="flex items-start gap-1.5 text-slate-300">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <span><strong>Dropoff (NGO):</strong> {task.donation.ngo?.address}</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-slate-300">
-                        <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-                        <span><strong>Pickup Date:</strong> {task.donation.pickupDate || 'Flexible'}</span>
+                        <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                        <span><strong>Schedule:</strong> {task.donation.pickupDate || 'Flexible'} {task.donation.pickupTimeSlot ? `(${task.donation.pickupTimeSlot.replace(/_/g, ' ')})` : ''}</span>
                       </div>
                       {task.routeNotes && (
                         <div className="flex items-center gap-1.5 text-slate-400">
@@ -165,6 +169,10 @@ export const DriverDashboardPage: React.FC = () => {
                         </div>
                       )}
                     </div>
+
+                    {task.status === 'IN_TRANSIT' && (
+                      <LiveLocationTracker deliveryId={task.id} status={task.status} donation={task.donation} />
+                    )}
                   </div>
 
                   <div className="border-t border-slate-800 pt-3 flex items-center gap-2">
@@ -224,15 +232,19 @@ export const DriverDashboardPage: React.FC = () => {
                       <h3 className="text-sm font-bold text-white mb-1">{donation.ngo?.name}</h3>
                       <p className="text-xs text-slate-400 line-clamp-2">{donation.description}</p>
 
-                      <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {donation.ngo?.address || 'N/A'}
+                      <div className="flex flex-col gap-1.5 mt-3 text-xs text-slate-500">
+                        <span className="flex items-start gap-1">
+                          <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
+                          Pickup: {donation.pickupAddress || 'Not provided'}
+                        </span>
+                        <span className="flex items-start gap-1">
+                          <MapPin className="w-3 h-3 shrink-0 mt-0.5 text-emerald-500" />
+                          NGO: {donation.ngo?.address || 'N/A'}
                         </span>
                         {donation.pickupDate && (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 text-amber-500/70">
                             <Calendar className="w-3 h-3" />
-                            {donation.pickupDate}
+                            {donation.pickupDate} {donation.pickupTimeSlot ? `(${donation.pickupTimeSlot.replace(/_/g, ' ')})` : ''}
                           </span>
                         )}
                       </div>

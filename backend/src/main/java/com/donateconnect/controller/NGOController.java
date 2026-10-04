@@ -26,8 +26,14 @@ public class NGOController {
     private final UserRepository userRepository;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<NGOProfileDto>>> getVerifiedNgos() {
-        List<NGOProfileDto> ngos = ngoService.getAllVerifiedNgos();
+    public ResponseEntity<ApiResponse<List<NGOProfileDto>>> getVerifiedNgos(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Boolean needsRightNow,
+            @RequestParam(required = false) Double donorLat,
+            @RequestParam(required = false) Double donorLng
+    ) {
+        List<NGOProfileDto> ngos = ngoService.getAllVerifiedNgos(category, city, needsRightNow, donorLat, donorLng);
         return ResponseEntity.ok(ApiResponse.success("Fetched verified NGO profiles", ngos));
     }
 

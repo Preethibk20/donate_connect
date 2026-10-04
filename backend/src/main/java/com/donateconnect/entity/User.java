@@ -9,7 +9,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users", indexes = {
-    @Index(name = "idx_user_email", columnList = "email", unique = true)
+    @Index(name = "idx_user_email", columnList = "email", unique = true),
+    @Index(name = "idx_user_role", columnList = "role")
 })
 @Getter
 @Setter
@@ -48,4 +49,10 @@ public class User {
     @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean approved = false;
+
+    @Column(name = "average_rating")
+    private Double averageRating;
+
+    @Column(name = "rating_count")
+    private Integer ratingCount;
 }

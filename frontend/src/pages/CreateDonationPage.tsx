@@ -4,8 +4,19 @@ import { useForm } from 'react-hook-form';
 import { createDonation, uploadDonationPhoto } from '../api/donationApi';
 import { getVerifiedNgos } from '../api/ngoApi';
 import { CreateDonationRequest, NGOProfile } from '../types';
-import { HeartHandshake, ArrowLeft, Send, Building2, UploadCloud, X, Loader2 } from 'lucide-react';
+import { HeartHandshake, ArrowLeft, Send, Building2, UploadCloud, X, Loader2, MapPin } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix Leaflet icons
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
@@ -22,6 +33,17 @@ interface UploadedPhoto {
   serverUrl: string;  // URL returned by backend storage endpoint
 }
 
+function LocationPicker({ position, setPosition }: { position: L.LatLngExpression | null, setPosition: (pos: L.LatLng) => void }) {
+  useMapEvents({
+    click(e) {
+      setPosition(e.latlng);
+    },
+  });
+  return position === null ? null : (
+    <Marker position={position}></Marker>
+  );
+}
+
 export const CreateDonationPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -36,6 +58,7 @@ export const CreateDonationPage: React.FC = () => {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const todayInputValue = getTodayInputValue();
+  const [mapPosition, setMapPosition] = useState<L.LatLng | null>(null);
 
   const {
     register,
@@ -130,6 +153,10 @@ export const CreateDonationPage: React.FC = () => {
       setPhotoError('Please upload at least one clear photo of the items.');
       return;
     }
+    if (!mapPosition) {
+      setServerError('Please select a pickup location on the map.');
+      return;
+    }
 
     setSubmitting(true);
     setServerError(null);
@@ -139,6 +166,8 @@ export const CreateDonationPage: React.FC = () => {
         ...data,
         description: data.description?.trim(),
         photoUrls: photos.map((p) => p.serverUrl),
+        pickupLat: mapPosition.lat,
+        pickupLng: mapPosition.lng,
       });
       showSuccess('Donation request submitted successfully!');
       navigate('/donations');
@@ -249,6 +278,69 @@ export const CreateDonationPage: React.FC = () => {
               {errors.pickupDate && (
                 <p className="text-rose-400 text-xs mt-1">{errors.pickupDate.message}</p>
               )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                Preferred Time Slot
+              </label>
+              <select
+                {...register('pickupTimeSlot', { required: 'Time slot is required' })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+              >
+                <option value="">-- Choose Time Slot --</option>
+                <option value="MORNING_9_12">Morning (9 AM - 12 PM)</option>
+                <option value="AFTERNOON_12_4">Afternoon (12 PM - 4 PM)</option>
+                <option value="EVENING_4_8">Evening (4 PM - 8 PM)</option>
+              </select>
+              {errors.pickupTimeSlot && (
+                <p className="text-rose-400 text-xs mt-1">{errors.pickupTimeSlot.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Pickup Address & Location */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                Pickup Address *
+              </label>
+              <input
+                type="text"
+                placeholder="Enter complete pickup address (e.g. 123 Main St, Apt 4B...)"
+                {...register('pickupAddress', { required: 'Pickup address is required' })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+              {errors.pickupAddress && (
+                <p className="text-rose-400 text-xs mt-1">{errors.pickupAddress.message}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-indigo-400" />
+                Pin Location on Map *
+              </label>
+              <div className="h-[250px] w-full rounded-2xl overflow-hidden border border-slate-800 relative z-0">
+                <MapContainer
+                  center={[28.6139, 77.2090]} // Default center (New Delhi)
+                  zoom={12}
+                  style={{ height: '100%', width: '100%' }}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; OpenStreetMap contributors'
+                  />
+                  <LocationPicker position={mapPosition} setPosition={setMapPosition} />
+                </MapContainer>
+                {!mapPosition && (
+                  <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center pointer-events-none z-[1000]">
+                    <span className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-semibold border border-slate-700 shadow-xl">
+                      Tap map to pin exact location
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

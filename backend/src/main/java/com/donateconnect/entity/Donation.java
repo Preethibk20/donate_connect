@@ -57,6 +57,18 @@ public class Donation {
     @Column(name = "pickup_date")
     private LocalDate pickupDate;
 
+    @Column(name = "pickup_time_slot", length = 100)
+    private String pickupTimeSlot;
+
+    @Column(name = "pickup_address", length = 500)
+    private String pickupAddress;
+
+    @Column(name = "pickup_lat")
+    private Double pickupLat;
+
+    @Column(name = "pickup_lng")
+    private Double pickupLng;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

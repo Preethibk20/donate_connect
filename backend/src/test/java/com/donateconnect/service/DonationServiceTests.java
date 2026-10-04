@@ -121,6 +121,9 @@ class DonationServiceTests {
                 .description("20 cotton shirts in good condition, sizes M and L for winter distribution")
                 .photoUrls(List.of("photo1.jpg"))
                 .pickupDate(LocalDate.now().plusDays(3))
+                .pickupAddress("123 Bangalore St")
+                .pickupLat(40.7128)
+                .pickupLng(-74.0060)
                 .build();
 
         mockMvc.perform(post("/api/donations")
@@ -140,6 +143,9 @@ class DonationServiceTests {
                 .category(Category.FOOD)
                 .description("Test food donation description with enough characters")
                 .pickupDate(LocalDate.now().plusDays(3))
+                .pickupAddress("123 Bangalore St")
+                .pickupLat(40.7128)
+                .pickupLng(-74.0060)
                 .build();
 
         mockMvc.perform(post("/api/donations")
@@ -172,6 +178,9 @@ class DonationServiceTests {
                 .category(Category.BOOKS)
                 .description("Books for donation with sufficient description length")
                 .pickupDate(LocalDate.now().plusDays(3))
+                .pickupAddress("123 Bangalore St")
+                .pickupLat(40.7128)
+                .pickupLng(-74.0060)
                 .build();
 
         mockMvc.perform(post("/api/donations")

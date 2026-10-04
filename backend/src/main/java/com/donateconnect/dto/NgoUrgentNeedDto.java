@@ -19,6 +19,7 @@ public class NgoUrgentNeedDto {
     private String title;
     private String description;
     private Category category;
+    private Integer quantity;
     private boolean active;
     private LocalDateTime createdAt;
 }

@@ -40,6 +40,9 @@ public class NgoUrgentNeed {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "quantity")
+    private Integer quantity;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

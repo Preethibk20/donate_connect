@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAdminStats, getPendingUsers, approveUser } from '../api/adminApi';
 import { AdminStats, User } from '../types';
-import { Shield, Building2, PackageCheck, Clock, CheckCircle2, RefreshCw, ArrowRight, Layers, UserCheck } from 'lucide-react';
+import { Shield, Building2, PackageCheck, Clock, CheckCircle2, RefreshCw, ArrowRight, Layers, UserCheck, Download, BarChart2, TrendingUp, PieChart as PieChartIcon } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell
+} from 'recharts';
 
 export const AdminOverviewPage: React.FC = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -44,6 +48,59 @@ export const AdminOverviewPage: React.FC = () => {
     fetchData();
   }, []);
 
+  const downloadCSV = () => {
+    if (!stats) return;
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    // Overview
+    csvContent += "Overview\nMetric,Value\n";
+    csvContent += `Total Donations,${stats.totalDonations}\n`;
+    csvContent += `Verified NGOs,${stats.verifiedNgos}\n`;
+    csvContent += `Pending Requests,${stats.pendingRequests}\n`;
+    csvContent += `Completed Deliveries,${stats.completedDeliveries}\n`;
+    csvContent += `Delivery Success Rate (%),${stats.deliverySuccessRate?.toFixed(2) || 0}\n`;
+    csvContent += `Avg Delivery Time (Hours),${stats.averageDeliveryTimeHours?.toFixed(2) || 0}\n\n`;
+
+    // Donations By Category
+    csvContent += "Donations By Category\nCategory,Count\n";
+    if (stats.donationsByCategory) {
+      Object.entries(stats.donationsByCategory).forEach(([category, count]) => {
+        csvContent += `${category},${count}\n`;
+      });
+    }
+    
+    // Top Donors
+    csvContent += "\nTop Donors\nName,Donation Count\n";
+    if (stats.topDonors) {
+      stats.topDonors.forEach(donor => {
+        csvContent += `${donor.name},${donor.donations}\n`;
+      });
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `admin_stats_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const chartDataByDate = stats?.donationsByDate 
+    ? Object.keys(stats.donationsByDate).map(key => ({ date: key, count: stats.donationsByDate![key] }))
+    : [];
+
+  const chartDataByCategory = stats?.donationsByCategory 
+    ? Object.keys(stats.donationsByCategory).map(key => ({ name: key, count: stats.donationsByCategory![key] }))
+    : [];
+
+  const chartDataByCity = stats?.donationsByCity 
+    ? Object.keys(stats.donationsByCity).map(key => ({ name: key, count: stats.donationsByCity![key] }))
+    : [];
+
+  const COLORS = ['#7567E8', '#059669', '#F59E0B', '#DC2626', '#3B82F6', '#8B5CF6'];
+
   return (
     <div className="space-y-8 py-6 max-w-6xl mx-auto">
       {/* Header */}
@@ -58,14 +115,24 @@ export const AdminOverviewPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={fetchData}
-          disabled={loading}
-          className="p-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors border border-slate-700 flex items-center gap-2 text-xs font-semibold self-start md:self-auto"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Stats
-        </button>
+        <div className="flex items-center gap-3 self-start md:self-auto">
+          <button
+            onClick={downloadCSV}
+            disabled={loading || !stats}
+            className="p-2.5 rounded-xl bg-emerald-600/10 text-emerald-400 hover:text-white hover:bg-emerald-600 transition-colors border border-emerald-600/20 flex items-center gap-2 text-xs font-semibold"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="p-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors border border-slate-700 flex items-center gap-2 text-xs font-semibold"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh Stats
+          </button>
+        </div>
       </div>
 
       {/* 4 Stat Cards */}
@@ -145,6 +212,125 @@ export const AdminOverviewPage: React.FC = () => {
         </div>
       )}
 
+      {/* Analytics Charts */}
+      {!loading && stats && (
+        <div className="space-y-6 pt-4">
+          
+          {/* Top Line Analytics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <h3 className="text-sm font-bold text-slate-200 mb-6 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-indigo-400" />
+                Donations Over Time
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartDataByDate}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickFormatter={(val) => val.substring(5)} />
+                    <YAxis stroke="#94a3b8" fontSize={12} allowDecimals={false} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc' }} />
+                    <Line type="monotone" dataKey="count" stroke="#7567E8" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <h3 className="text-sm font-bold text-slate-200 mb-6 flex items-center gap-2">
+                <PieChartIcon className="w-4 h-4 text-emerald-400" />
+                Donations By Category
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartDataByCategory}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="count"
+                    >
+                      {chartDataByCategory.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc' }} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <h3 className="text-sm font-bold text-slate-200 mb-6 flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 text-amber-400" />
+                Donations by City
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartDataByCity}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
+                    <YAxis stroke="#94a3b8" fontSize={12} allowDecimals={false} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc' }} />
+                    <Bar dataKey="count" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Performance Metrics */}
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+              <h3 className="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
+                <PackageCheck className="w-4 h-4 text-rose-400" />
+                Delivery Performance Metrics
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                  <p className="text-xs text-slate-500 mb-1">Success Rate</p>
+                  <p className="text-3xl font-extrabold text-emerald-400">{stats.deliverySuccessRate?.toFixed(1)}<span className="text-xl">%</span></p>
+                </div>
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                  <p className="text-xs text-slate-500 mb-1">Avg Delivery Time</p>
+                  <p className="text-3xl font-extrabold text-indigo-400">{stats.averageDeliveryTimeHours?.toFixed(1)}<span className="text-sm font-normal text-slate-400 ml-1">hrs</span></p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 mb-2">Top Donors</p>
+                  <ul className="space-y-1">
+                    {stats.topDonors?.map((d, i) => (
+                      <li key={i} className="text-xs text-slate-300 flex justify-between">
+                        <span className="truncate pr-2">{i+1}. {d.name}</span>
+                        <span className="font-bold text-indigo-300">{d.donations}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-2">Top NGOs</p>
+                  <ul className="space-y-1">
+                    {stats.topNgos?.map((n, i) => (
+                      <li key={i} className="text-xs text-slate-300 flex justify-between">
+                        <span className="truncate pr-2">{i+1}. {n.name}</span>
+                        <span className="font-bold text-emerald-300">{n.donations}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Action Navigation Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
         <Link
@@ -174,6 +360,22 @@ export const AdminOverviewPage: React.FC = () => {
             </h3>
             <p className="text-xs text-slate-400">
               View paginated table of all donations with filters for status, category, and NGO.
+            </p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all shrink-0 ml-4" />
+        </Link>
+
+        <Link
+          to="/admin/audit"
+          className="group bg-slate-900/40 border border-slate-800 hover:border-rose-500/40 rounded-2xl p-6 transition-all flex items-center justify-between md:col-span-2"
+        >
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-white group-hover:text-rose-400 transition-colors flex items-center gap-2">
+              <Shield className="w-5 h-5 text-rose-400" />
+              Security & Audit Logs
+            </h3>
+            <p className="text-xs text-slate-400">
+              Monitor sensitive system events like verification, delivery updates, and role changes.
             </p>
           </div>
           <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all shrink-0 ml-4" />
