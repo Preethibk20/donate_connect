@@ -43,6 +43,14 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("OTP verified successfully", authResponse));
     }
 
+    @PostMapping("/resend-otp")
+    public ResponseEntity<ApiResponse<Void>> resendOtp(@RequestParam String email, jakarta.servlet.http.HttpServletRequest httpRequest) {
+        String clientIp = httpRequest.getRemoteAddr();
+        System.out.println("RESOLVED CLIENT IP FOR RESEND OTP: " + clientIp);
+        authService.resendOtp(email, clientIp);
+        return ResponseEntity.ok(ApiResponse.success("OTP resent successfully", null));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponseDto>> getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {

@@ -80,7 +80,11 @@ export const LiveLocationTracker: React.FC<Props> = ({ deliveryId, status, donat
                     timestamp: new Date().toISOString()
                 }).then(() => {
                     setLastShared(new Date());
-                }).catch((e) => console.error('Failed to send location', e));
+                }).catch((e) => {
+                    if (e.response?.status !== 429) {
+                        console.error('Failed to send location', e);
+                    }
+                });
             }
         }, 5000);
     };
@@ -150,7 +154,11 @@ export const LiveLocationTracker: React.FC<Props> = ({ deliveryId, status, donat
                 timestamp: new Date().toISOString()
             }).then(() => {
                 setLastShared(new Date());
-            }).catch(console.error);
+            }).catch((e) => {
+                if (e.response?.status !== 429) {
+                    console.error('Failed to send simulated location', e);
+                }
+            });
 
             i += Math.max(1, Math.floor(coords.length / 50));
         }, 2000);

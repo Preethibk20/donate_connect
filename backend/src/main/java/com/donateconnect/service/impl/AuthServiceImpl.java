@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.donateconnect.service.EmailService;
 import com.donateconnect.repository.NGOProfileRepository;
 import com.donateconnect.entity.NGOProfile;
+import com.donateconnect.service.OtpRateLimitService;
 import java.time.LocalDateTime;
 
 @Service
@@ -27,6 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtils jwtUtils;
     private final EmailService emailService;
     private final NGOProfileRepository ngoProfileRepository;
+    private final OtpRateLimitService otpRateLimitService;
 
     @Override
     @Transactional
@@ -128,17 +130,30 @@ public class AuthServiceImpl implements AuthService {
         if (LocalDateTime.now().isAfter(user.getOtpExpiry())) {
             user.setOtp(null);
             user.setOtpExpiry(null);
+            user.setOtpAttempts(0);
             userRepository.save(user);
             throw new BadCredentialsException("OTP has expired. Please login again.");
         }
 
+        if (user.getOtpAttempts() >= 3 || user.getTotalOtpAttempts() >= 10) {
+            user.setOtp(null);
+            user.setOtpExpiry(null);
+            user.setOtpAttempts(0);
+            userRepository.save(user);
+            throw new BadCredentialsException("Too many invalid attempts. OTP revoked.");
+        }
+
         if (!user.getOtp().equals(request.getOtp())) {
+            user.setOtpAttempts(user.getOtpAttempts() + 1);
+            user.setTotalOtpAttempts(user.getTotalOtpAttempts() + 1);
+            userRepository.save(user);
             throw new BadCredentialsException("Invalid OTP code");
         }
 
         // Clear OTP
         user.setOtp(null);
         user.setOtpExpiry(null);
+        user.setOtpAttempts(0);
         userRepository.save(user);
 
         String token = jwtUtils.generateToken(user);
@@ -148,6 +163,44 @@ public class AuthServiceImpl implements AuthService {
                 .user(mapToDto(user))
                 .requiresOtp(false)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void resendOtp(String email, String clientIp) {
+        if (otpRateLimitService.isIpRateLimited(clientIp)) {
+            throw new IllegalArgumentException("Too many requests from this IP. Please try again later.");
+        }
+
+        User user = userRepository.findByEmail(email.toLowerCase().trim()).orElse(null);
+        if (user == null) {
+            return; // Generic response, do not reveal email exists
+        }
+
+        // 60s cooldown per account
+        if (user.getLastOtpSentAt() != null && LocalDateTime.now().minusSeconds(60).isBefore(user.getLastOtpSentAt())) {
+            throw new IllegalArgumentException("Please wait 60 seconds before requesting another OTP.");
+        }
+
+        // max 5 resends per hour per account
+        if (user.getFirstOtpResendAt() == null || LocalDateTime.now().minusHours(1).isAfter(user.getFirstOtpResendAt())) {
+            user.setFirstOtpResendAt(LocalDateTime.now());
+            user.setOtpResendCount(0);
+        }
+
+        if (user.getOtpResendCount() >= 5) {
+            throw new IllegalArgumentException("Maximum OTP resend limit reached for this hour. Please try again later.");
+        }
+
+        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+        user.setOtp(otp);
+        user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
+        user.setOtpAttempts(0);
+        user.setLastOtpSentAt(LocalDateTime.now());
+        user.setOtpResendCount(user.getOtpResendCount() + 1);
+        userRepository.save(user);
+
+        emailService.sendOtpEmail(user.getEmail(), otp);
     }
 
     @Override

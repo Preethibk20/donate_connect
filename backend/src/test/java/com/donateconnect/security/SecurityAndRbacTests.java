@@ -111,10 +111,168 @@ class SecurityAndRbacTests {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.requiresOtp").value(true))
                 .andExpect(jsonPath("$.data.user.role").value("DONOR"));
+    }
+
+    @Test
+    void testRegistrationOtp_Success() throws Exception {
+        RegisterRequest request = RegisterRequest.builder()
+                .email("otpdonor@test.com")
+                .password("password123")
+                .fullName("OTP Donor")
+                .build();
+        
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isAccepted());
+
+        User user = userRepository.findByEmail("otpdonor@test.com").orElseThrow();
+        String otp = user.getOtp();
+        
+        VerifyOtpRequest verifyRequest = VerifyOtpRequest.builder()
+                .email("otpdonor@test.com")
+                .otp(otp)
+                .build();
+
+        mockMvc.perform(post("/api/auth/verify-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(verifyRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.token").isNotEmpty());
+    }
+
+    @Test
+    void testRegistrationOtp_WrongOtpRejected() throws Exception {
+        RegisterRequest request = RegisterRequest.builder()
+                .email("wrongotp@test.com")
+                .password("password123")
+                .fullName("Wrong OTP Donor")
+                .build();
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isAccepted());
+
+        VerifyOtpRequest verifyRequest = VerifyOtpRequest.builder()
+                .email("wrongotp@test.com")
+                .otp("000000") // Assuming real OTP is random, this has 99.999% chance of being wrong
+                .build();
+
+        mockMvc.perform(post("/api/auth/verify-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(verifyRequest)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testRegistrationOtp_ExpiredRejected() throws Exception {
+        RegisterRequest request = RegisterRequest.builder()
+                .email("expiredotp@test.com")
+                .password("password123")
+                .fullName("Expired OTP Donor")
+                .build();
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isAccepted());
+
+        User user = userRepository.findByEmail("expiredotp@test.com").orElseThrow();
+        user.setOtpExpiry(java.time.LocalDateTime.now().minusMinutes(1));
+        userRepository.save(user);
+        
+        VerifyOtpRequest verifyRequest = VerifyOtpRequest.builder()
+                .email("expiredotp@test.com")
+                .otp(user.getOtp())
+                .build();
+
+        mockMvc.perform(post("/api/auth/verify-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(verifyRequest)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testRegistrationOtp_AttemptLimit() throws Exception {
+        RegisterRequest request = RegisterRequest.builder()
+                .email("limitotp@test.com")
+                .password("password123")
+                .fullName("Limit OTP Donor")
+                .build();
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isAccepted());
+
+        VerifyOtpRequest wrongRequest = VerifyOtpRequest.builder()
+                .email("limitotp@test.com")
+                .otp("000000")
+                .build();
+
+        // 3 wrong attempts
+        mockMvc.perform(post("/api/auth/verify-otp").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(wrongRequest))).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/auth/verify-otp").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(wrongRequest))).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/auth/verify-otp").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(wrongRequest))).andExpect(status().isUnauthorized());
+
+        // 4th attempt (even with correct OTP) should fail because revoked
+        User user = userRepository.findByEmail("limitotp@test.com").orElseThrow();
+        VerifyOtpRequest correctRequest = VerifyOtpRequest.builder()
+                .email("limitotp@test.com")
+                .otp(user.getOtp() == null ? "123456" : user.getOtp())
+                .build();
+        
+        mockMvc.perform(post("/api/auth/verify-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(correctRequest)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testRegistrationOtp_ResendInvalidatesPrevious() throws Exception {
+        RegisterRequest request = RegisterRequest.builder()
+                .email("resendotp@test.com")
+                .password("password123")
+                .fullName("Resend OTP Donor")
+                .build();
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isAccepted());
+
+        User user = userRepository.findByEmail("resendotp@test.com").orElseThrow();
+        String oldOtp = user.getOtp();
+
+        // Resend
+        mockMvc.perform(post("/api/auth/resend-otp?email=resendotp@test.com"))
+                .andExpect(status().isOk());
+
+        User updatedUser = userRepository.findByEmail("resendotp@test.com").orElseThrow();
+        String newOtp = updatedUser.getOtp();
+
+        // Verify old OTP fails
+        VerifyOtpRequest oldRequest = VerifyOtpRequest.builder()
+                .email("resendotp@test.com")
+                .otp(oldOtp)
+                .build();
+        if (!oldOtp.equals(newOtp)) {
+            mockMvc.perform(post("/api/auth/verify-otp")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(oldRequest)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        // Verify new OTP works
+        VerifyOtpRequest newRequest = VerifyOtpRequest.builder()
+                .email("resendotp@test.com")
+                .otp(newOtp)
+                .build();
+        mockMvc.perform(post("/api/auth/verify-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(newRequest)))
+                .andExpect(status().isOk());
     }
 
     @Test

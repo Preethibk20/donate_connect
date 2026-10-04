@@ -10,6 +10,7 @@ import { ArrowLeft, Navigation, Clock, ShieldCheck, MapPin, AlertTriangle, Refre
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { OtpInput } from '../components/OtpInput';
+import { getWsUrl } from '../utils/urlUtils';
 
 // Fix Leaflet icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -80,7 +81,10 @@ export const TrackDeliveryPage: React.FC = () => {
 
     // Setup STOMP WebSocket
     const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+        return new SockJS(getWsUrl(baseUrl));
+      },
       connectHeaders: {
         Authorization: `Bearer ${token}`
       },

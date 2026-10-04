@@ -50,12 +50,12 @@ public class LocationRestController {
                     .body(ApiResponse.error("Location updates are disabled for completed or cancelled deliveries"));
         }
 
-        // Rate Limiting Check: Max 1 ping per 3 seconds (3000 ms)
+        // Rate Limiting Check: Max 1 ping per 1 seconds (1000 ms)
         if (delivery.getLastLocationAt() != null) {
             long diffMs = java.time.Duration.between(delivery.getLastLocationAt(), java.time.LocalDateTime.now()).toMillis();
-            if (diffMs < 3000) {
+            if (diffMs < 1000) {
                 return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                        .body(ApiResponse.error("Rate limit exceeded: Location updates are limited to once every 3 seconds"));
+                        .body(ApiResponse.error("Rate limit exceeded: Location updates are limited to once every 1 second"));
             }
         }
 

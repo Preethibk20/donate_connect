@@ -54,13 +54,8 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
                 }
             } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
                 String destination = accessor.getDestination();
-                if (destination != null && (destination.startsWith("/topic/donation/") || destination.startsWith("/topic/delivery/"))) {
-                    UUID id;
-                    if (destination.startsWith("/topic/donation/")) {
-                        id = UUID.fromString(destination.substring("/topic/donation/".length()));
-                    } else {
-                        id = UUID.fromString(destination.substring("/topic/delivery/".length()));
-                    }
+                if (destination != null && destination.startsWith("/topic/donation/")) {
+                    UUID id = UUID.fromString(destination.substring("/topic/donation/".length()));
 
                     UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) accessor.getUser();
                     if (auth == null) {
@@ -69,14 +64,8 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
                     UUID userId = (UUID) auth.getDetails();
                     String role = auth.getAuthorities().iterator().next().getAuthority();
 
-                    Delivery delivery;
-                    if (destination.startsWith("/topic/donation/")) {
-                        delivery = deliveryRepository.findByDonationId(id)
-                                .orElseThrow(() -> new AccessDeniedException("Delivery not found for donation"));
-                    } else {
-                        delivery = deliveryRepository.findById(id)
-                                .orElseThrow(() -> new AccessDeniedException("Delivery not found"));
-                    }
+                    Delivery delivery = deliveryRepository.findByDonationId(id)
+                            .orElseThrow(() -> new AccessDeniedException("Delivery not found for donation"));
 
                     // Strict Active Delivery Check: Stop tracking outside active delivery
                     if (delivery.getStatus() == com.donateconnect.entity.DeliveryStatus.DELIVERED ||
@@ -94,6 +83,11 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
                             throw new AccessDeniedException("You are not authorized to subscribe to live tracking for this delivery");
                         }
                     }
+                }
+            } else if (StompCommand.SEND.equals(accessor.getCommand())) {
+                String destination = accessor.getDestination();
+                if (destination != null && (destination.startsWith("/topic/") || destination.startsWith("/user/"))) {
+                    throw new AccessDeniedException("Clients are not allowed to SEND directly to broker topics.");
                 }
             }
         }

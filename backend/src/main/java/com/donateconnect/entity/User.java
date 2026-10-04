@@ -47,6 +47,24 @@ public class User {
     private LocalDateTime otpExpiry;
 
     @Builder.Default
+    @Column(name = "otp_attempts", nullable = false, columnDefinition = "integer default 0")
+    private Integer otpAttempts = 0;
+
+    @Builder.Default
+    @Column(name = "total_otp_attempts", nullable = false, columnDefinition = "integer default 0")
+    private Integer totalOtpAttempts = 0;
+
+    @Column(name = "last_otp_sent_at")
+    private LocalDateTime lastOtpSentAt;
+
+    @Builder.Default
+    @Column(name = "otp_resend_count", nullable = false, columnDefinition = "integer default 0")
+    private Integer otpResendCount = 0;
+
+    @Column(name = "first_otp_resend_at")
+    private LocalDateTime firstOtpResendAt;
+
+    @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean approved = false;
 
