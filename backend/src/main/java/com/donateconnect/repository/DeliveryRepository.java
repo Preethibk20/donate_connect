@@ -12,6 +12,7 @@ import java.util.UUID;
 public interface DeliveryRepository extends JpaRepository<Delivery, UUID> {
     List<Delivery> findByVolunteerId(UUID volunteerId);
     Optional<Delivery> findByDonationId(UUID donationId);
+    boolean existsByDonationIdAndStatusIn(UUID donationId, List<com.donateconnect.entity.DeliveryStatus> statuses);
 
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.data.jpa.repository.Query("UPDATE Delivery d SET d.lastLat = :lat, d.lastLng = :lng, d.lastLocationAt = :time WHERE d.id = :id")

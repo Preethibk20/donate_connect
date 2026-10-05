@@ -77,7 +77,17 @@ test.describe('DonateConnect Full Flow E2E', () => {
     const map = page.locator('.leaflet-container');
     await map.click();
 
-    await page.click('button:has-text("Submit Donation Request")');
+    const [donationResponse] = await Promise.all([
+      page.waitForResponse('**/api/donations'),
+      page.click('button:has-text("Submit Donation Request")')
+    ]);
+
+    const requestBody = donationResponse.request().postData();
+    const responseBody = await donationResponse.text();
+    console.log("DONATION POST REQUEST PAYLOAD: " + requestBody);
+    console.log("DONATION POST RESPONSE STATUS: " + donationResponse.status());
+    console.log("DONATION POST RESPONSE BODY: " + responseBody);
+
     await expect(page).toHaveURL('http://localhost:5173/donations');
 
     // Get the donation ID or just logout
@@ -86,12 +96,12 @@ test.describe('DonateConnect Full Flow E2E', () => {
 
     // --- 3. NGO Login & Accept Donation ---
     await page.goto('http://localhost:5173/login');
-    await page.fill('input[type="email"]', 'info@akshayapatra.org');
+    await page.fill('input[type="email"]', 'contact@goonj.org');
     await page.fill('input[type="password"]', 'password123');
     await page.click('button[type="submit"]');
 
     // NGO Dashboard should show pending donations
-    await expect(page).toHaveURL('http://localhost:5173/ngo/dashboard');
+    await expect(page).toHaveURL('http://localhost:5173/ngo-dashboard');
     
     // Find the donation card and Accept
     // Wait for the specific donation text

@@ -49,7 +49,7 @@ public class DataInitializer implements CommandLineRunner {
                 .passwordHash(passwordEncoder.encode("admin123"))
                 .fullName("Aarav Sharma (System Admin)")
                 .role(Role.ADMIN)
-                .isApproved(true)
+                .approved(true)
                 .build();
         userRepository.save(adminUser);
 
@@ -59,7 +59,7 @@ public class DataInitializer implements CommandLineRunner {
                 .passwordHash(passwordEncoder.encode("driver123"))
                 .fullName("Vikram Singh (Volunteer Logistics Coordinator)")
                 .role(Role.VOLUNTEER)
-                .isApproved(true)
+                .approved(true)
                 .build();
         userRepository.save(volunteerUser);
 
@@ -69,7 +69,7 @@ public class DataInitializer implements CommandLineRunner {
                 .passwordHash(passwordEncoder.encode("corporate123"))
                 .fullName("Tata Consultancy Services (TCS CSR Wing)")
                 .role(Role.CORPORATE)
-                .isApproved(true)
+                .approved(true)
                 .build();
         userRepository.save(corporateUser);
 
@@ -284,7 +284,7 @@ public class DataInitializer implements CommandLineRunner {
                 .passwordHash(passwordEncoder.encode(password))
                 .fullName(ngoName + " Manager")
                 .role(Role.NGO)
-                .isApproved(true)
+                .approved(true)
                 .build();
         User savedUser = userRepository.save(ngoUser);
 
