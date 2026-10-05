@@ -106,14 +106,12 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 ## 5. Not Covered and Known Issues
 
 ### Not Covered
-- **GPS Permission Denied / Geolocation Unavailable**: Not verified via automated E2E tests, only manually.
-- **Courier Reconnecting Mid-trip / Tab Closed**: STOMP reconnection and page lifecycle are tested in component unit tests but lack a full E2E validation script.
-- **Large Photo Upload**: The 10MB limit is handled, but uploading exactly 10MB or boundary sizes isn't tested in Vitest.
-- **Two volunteers claiming the same delivery**: Backend unit test coverage exists for claiming, but a high-concurrency race condition E2E test is not written.
-- **Donor cancelling after assignment / NGO rejecting after courier accepted**: Not tested automatically.
-- **Wrong OTP 3 times then regeneration**: Tested manually, no automated E2E for this edge case.
+- **GPS Permission Denied / Geolocation Unavailable**: NOT TESTED automatically.
+- **Courier Reconnecting Mid-trip / Tab Closed**: NOT TESTED automatically. Component tests verify unmounting behavior, but full page lifecycle lacks E2E script.
+- **Large Photo Upload**: NOT TESTED. The 10MB limit is handled in code but boundary sizes aren't tested in Vitest.
+- **Donor cancelling after assignment / NGO rejecting after courier accepted**: NOT TESTED automatically.
+- **Wrong OTP 3 times then regeneration**: NOT TESTED automatically (lockout logic exists in code but lacks automated E2E coverage).
 
 ### Known Issues
-- **OTP Regeneration Limits**: Current logic does not lock out the volunteer or force regeneration automatically after 3 invalid attempts.
-- **Race Condition on Claiming**: Backend uses `@Transactional`, but lacks explicit pessimistic locking on the `Donation` row, meaning high-concurrency claims might still theoretically result in multiple assignments if isolation fails.
+- **Race Condition on Claiming**: High-concurrency race condition for two volunteers claiming the same delivery is NOT TESTED and remains an open bug. Backend uses `@Transactional` but lacks explicit `@Version` optimistic locking, meaning isolation level verification under heavy load is unproven.
 - **Cancellation Post-Assignment**: Donor cancellation after a courier is assigned lacks a specific push notification back to the courier.

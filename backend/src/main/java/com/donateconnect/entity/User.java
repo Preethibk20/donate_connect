@@ -54,6 +54,9 @@ public class User {
     @Column(name = "total_otp_attempts", nullable = false, columnDefinition = "integer default 0")
     private Integer totalOtpAttempts = 0;
 
+    @Column(name = "first_otp_failure_at")
+    private LocalDateTime firstOtpFailureAt;
+
     @Column(name = "last_otp_sent_at")
     private LocalDateTime lastOtpSentAt;
 

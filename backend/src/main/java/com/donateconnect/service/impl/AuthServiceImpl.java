@@ -79,7 +79,8 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Generate and save OTP
-        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+        java.security.SecureRandom secureRandom = new java.security.SecureRandom();
+        String otp = String.format("%06d", secureRandom.nextInt(1_000_000));
         savedUser.setOtp(otp);
         savedUser.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
         userRepository.save(savedUser);
@@ -135,6 +136,12 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("OTP has expired. Please login again.");
         }
 
+        // Check 24-hour lockout window
+        if (user.getFirstOtpFailureAt() != null && LocalDateTime.now().minusHours(24).isAfter(user.getFirstOtpFailureAt())) {
+            user.setTotalOtpAttempts(0);
+            user.setFirstOtpFailureAt(null);
+        }
+
         if (user.getOtpAttempts() >= 3 || user.getTotalOtpAttempts() >= 10) {
             user.setOtp(null);
             user.setOtpExpiry(null);
@@ -144,16 +151,21 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (!user.getOtp().equals(request.getOtp())) {
+            if (user.getTotalOtpAttempts() == 0) {
+                user.setFirstOtpFailureAt(LocalDateTime.now());
+            }
             user.setOtpAttempts(user.getOtpAttempts() + 1);
             user.setTotalOtpAttempts(user.getTotalOtpAttempts() + 1);
             userRepository.save(user);
             throw new BadCredentialsException("Invalid OTP code");
         }
 
-        // Clear OTP
+        // Clear OTP on success
         user.setOtp(null);
         user.setOtpExpiry(null);
         user.setOtpAttempts(0);
+        user.setTotalOtpAttempts(0);
+        user.setFirstOtpFailureAt(null);
         userRepository.save(user);
 
         String token = jwtUtils.generateToken(user);
@@ -169,7 +181,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void resendOtp(String email, String clientIp) {
         if (otpRateLimitService.isIpRateLimited(clientIp)) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "Too many requests from this IP. Please try again later.");
+            return; // Generic response, silent throttle
         }
 
         User user = userRepository.findByEmail(email.toLowerCase().trim()).orElse(null);
@@ -179,7 +191,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 60s cooldown per account
         if (user.getLastOtpSentAt() != null && LocalDateTime.now().minusSeconds(60).isBefore(user.getLastOtpSentAt())) {
-            throw new IllegalArgumentException("Please wait 60 seconds before requesting another OTP.");
+            return; // Generic response, silent throttle
         }
 
         // max 5 resends per hour per account
@@ -189,10 +201,11 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (user.getOtpResendCount() >= 5) {
-            throw new IllegalArgumentException("Maximum OTP resend limit reached for this hour. Please try again later.");
+            return; // Generic response, silent throttle
         }
 
-        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+        java.security.SecureRandom secureRandom = new java.security.SecureRandom();
+        String otp = String.format("%06d", secureRandom.nextInt(1_000_000));
         user.setOtp(otp);
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
         user.setOtpAttempts(0);

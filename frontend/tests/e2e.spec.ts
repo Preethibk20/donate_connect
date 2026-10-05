@@ -18,19 +18,26 @@ test.describe('DonateConnect Full Flow E2E', () => {
     // donor@example.com, ngo@example.com, courier@example.com, admin@example.com
     // So we don't need to register them.
 
-    // --- 2. Donor Register & Create Donation ---
-    await page.goto('http://localhost:5173/register');
-    await page.fill('input[name="fullName"]', 'E2E Donor');
-    await page.fill('input[type="email"]', donorEmail);
-    await page.fill('input[name="password"]', password);
-    await page.fill('input[name="confirmPassword"]', password);
-    await page.selectOption('select[name="role"]', 'DONOR');
-    await page.click('button[type="submit"]');
+    page.on('console', msg => console.log('BROWSER CONSOLE:', msg.text()));
+    page.on('requestfailed', request => console.log('REQUEST FAILED:', request.url(), request.failure()?.errorText));
+
+    // --- 2. Donor Login & Create Donation ---
+    await page.goto('http://localhost:5173/login');
+    await page.fill('input[type="email"]', 'priya.patel@gmail.com');
+    await page.fill('input[name="password"]', 'donor123');
+    
+    // Log network response for login to debug
+    const [loginResponse] = await Promise.all([
+      page.waitForResponse('**/api/auth/login'),
+      page.click('button[type="submit"]')
+    ]);
+    console.log(`Login response status: ${loginResponse.status()}`);
+    console.log(`Login response body: ${await loginResponse.text()}`);
 
     await expect(page).toHaveURL('http://localhost:5173/donations');
 
-    await page.click('a[href="/donations/create"]');
-    await expect(page).toHaveURL('http://localhost:5173/donations/create');
+    await page.click('a[href="/donate/new"]');
+    await expect(page).toHaveURL('http://localhost:5173/donate/new');
 
     // Fill Donation Form
     await page.selectOption('select[name="ngoId"]', { index: 1 }); // select first NGO

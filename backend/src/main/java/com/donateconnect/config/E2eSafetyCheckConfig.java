@@ -28,8 +28,8 @@ public class E2eSafetyCheckConfig {
         }
 
         if (isE2eOrTest) {
-            if (dbUrl != null && dbUrl.contains("neon.tech")) {
-                throw new IllegalStateException("CRITICAL SECURITY FAILURE: E2E/Test profile is attempting to connect to the Neon production database! JDBC URL contains 'neon.tech'. Stopping application immediately to prevent data corruption.");
+            if (dbUrl == null || !dbUrl.startsWith("jdbc:h2:")) {
+                throw new IllegalStateException("CRITICAL SECURITY FAILURE: E2E/Test profile is attempting to connect to a non-H2 database! JDBC URL does not start with jdbc:h2:. Stopping application immediately to prevent data corruption.");
             }
         }
     }
