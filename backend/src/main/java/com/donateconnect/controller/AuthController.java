@@ -4,11 +4,13 @@ import com.donateconnect.dto.*;
 import com.donateconnect.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -46,7 +48,7 @@ public class AuthController {
     @PostMapping("/resend-otp")
     public ResponseEntity<ApiResponse<Void>> resendOtp(@RequestParam String email, jakarta.servlet.http.HttpServletRequest httpRequest) {
         String clientIp = httpRequest.getRemoteAddr();
-        System.out.println("RESOLVED CLIENT IP FOR RESEND OTP: " + clientIp);
+        log.debug("Resolved client IP for resend-otp: {}", clientIp);
         authService.resendOtp(email, clientIp);
         return ResponseEntity.ok(ApiResponse.success("OTP resent successfully", null));
     }
@@ -61,3 +63,4 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("User profile fetched successfully", userDto));
     }
 }
+

@@ -28,8 +28,8 @@ public class Delivery {
     @JoinColumn(name = "donation_id", nullable = false, unique = true)
     private Donation donation;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "volunteer_id", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @JoinColumn(name = "volunteer_id", nullable = true)
     private User volunteer;
 
     @Enumerated(EnumType.STRING)

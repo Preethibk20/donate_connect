@@ -82,7 +82,7 @@ export const TrackDeliveryPage: React.FC = () => {
     // Setup STOMP WebSocket
     const client = new Client({
       webSocketFactory: () => {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
         return new SockJS(getWsUrl(baseUrl));
       },
       connectHeaders: {

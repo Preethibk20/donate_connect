@@ -82,10 +82,10 @@ public class AuthRateLimitTest {
         }
 
         // 6th attempt should fail
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(org.springframework.web.server.ResponseStatusException.class, () -> {
             authService.resendOtp("nonexistent6@test.com", ip);
         });
-        assertTrue(ex.getMessage().contains("Too many requests from this IP"));
+        assertTrue(ex.getReason() != null && ex.getReason().contains("Too many requests from this IP"));
     }
 
     @Test

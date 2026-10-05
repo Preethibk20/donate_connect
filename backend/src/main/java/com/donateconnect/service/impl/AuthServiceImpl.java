@@ -169,7 +169,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void resendOtp(String email, String clientIp) {
         if (otpRateLimitService.isIpRateLimited(clientIp)) {
-            throw new IllegalArgumentException("Too many requests from this IP. Please try again later.");
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "Too many requests from this IP. Please try again later.");
         }
 
         User user = userRepository.findByEmail(email.toLowerCase().trim()).orElse(null);

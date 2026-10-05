@@ -253,41 +253,127 @@ class LocationPipelineTest {
     }
 
     @Test
-    void testWebsocketSubscribeUnauthorizedUserRejected() throws Exception {
+    void testWebsocketSubscribeAuthorizedUsersAccepted() throws Exception {
         WebSocketStompClient stompClient = createStompClient();
         String url = "ws://localhost:" + port + "/ws";
         
-        // Authorized: donor, ngo, volunteer, admin
         String[] authorized = {donorToken, ngoToken, volunteerToken, adminToken};
         for (String token : authorized) {
             StompHeaders headers = new StompHeaders();
             headers.add("Authorization", "Bearer " + token);
             StompSession session = stompClient.connectAsync(url, new WebSocketHttpHeaders(), headers, new StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
             
-            session.subscribe("/topic/donation/" + donation.getId(), new StompSessionHandlerAdapter() {});
+            // Should not throw or receive error
+            StompSession.Subscription sub = session.subscribe("/topic/donation/" + donation.getId(), new StompSessionHandlerAdapter() {});
+            org.junit.jupiter.api.Assertions.assertNotNull(sub, "Subscription should be created");
+            session.disconnect();
         }
+    }
 
-        // Unauthorized: wrong volunteer, wrong donor, wrong ngo
-        String[] unauthorized = {wrongVolunteerToken, wrongDonorToken, wrongNgoToken};
-        for (String token : unauthorized) {
+    @Test
+    void testWebsocketSubscribeDonorAndNgoAcceptedBeforeVolunteerAssigned() throws Exception {
+        // Temporarily disassociate volunteer
+        delivery.setVolunteer(null);
+        deliveryRepository.save(delivery);
+
+        WebSocketStompClient stompClient = createStompClient();
+        String url = "ws://localhost:" + port + "/ws";
+
+        String[] authorizedBeforeVolunteer = {donorToken, ngoToken, adminToken};
+        for (String token : authorizedBeforeVolunteer) {
             StompHeaders headers = new StompHeaders();
             headers.add("Authorization", "Bearer " + token);
             StompSession session = stompClient.connectAsync(url, new WebSocketHttpHeaders(), headers, new StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
 
-            CompletableFuture<Boolean> errorReceived = new CompletableFuture<>();
-            session.subscribe("/topic/donation/" + donation.getId(), new StompSessionHandlerAdapter() {
+            StompSession.Subscription sub = session.subscribe("/topic/donation/" + donation.getId(), new StompSessionHandlerAdapter() {});
+            org.junit.jupiter.api.Assertions.assertNotNull(sub, "Donor/NGO/Admin should subscribe without NPE even before volunteer is assigned");
+            session.disconnect();
+        }
+
+        // Restore volunteer
+        delivery.setVolunteer(volunteer);
+        deliveryRepository.save(delivery);
+    }
+
+    @Test
+    void testWebsocketSubscribeUnauthorizedUsersRejected() throws Exception {
+        WebSocketStompClient stompClient = createStompClient();
+        String url = "ws://localhost:" + port + "/ws";
+        
+        String[] unauthorized = {wrongVolunteerToken, wrongDonorToken, wrongNgoToken};
+        for (String token : unauthorized) {
+            StompHeaders headers = new StompHeaders();
+            headers.add("Authorization", "Bearer " + token);
+            CompletableFuture<Boolean> rejected = new CompletableFuture<>();
+            StompSessionHandlerAdapter sessionHandler = new StompSessionHandlerAdapter() {
                 @Override
                 public void handleException(StompSession session, StompCommand command, StompHeaders headers, byte[] payload, Throwable exception) {
-                    errorReceived.complete(true);
+                    rejected.complete(true);
                 }
-            });
-            // We expect an error or disconnect
+                @Override
+                public void handleTransportError(StompSession session, Throwable exception) {
+                    rejected.complete(true);
+                }
+                @Override
+                public void handleFrame(StompHeaders headers, Object payload) {
+                    rejected.complete(true);
+                }
+            };
+
+            StompSession session = stompClient.connectAsync(url, new WebSocketHttpHeaders(), headers, sessionHandler).get(5, TimeUnit.SECONDS);
+
+            session.subscribe("/topic/donation/" + donation.getId(), sessionHandler);
+            
+            Boolean wasRejected = rejected.get(5, TimeUnit.SECONDS);
+            org.junit.jupiter.api.Assertions.assertTrue(wasRejected, "Expected subscription to be rejected for token");
             try {
-                errorReceived.get(2, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                // Ignore timeouts in test context for simplicity if not thrown properly, but it should hit
-            }
+                session.disconnect();
+            } catch (Exception ignored) {}
         }
+    }
+
+    @Test
+    void testLocationPipelineEndToEnd() throws Exception {
+        WebSocketStompClient stompClient = createStompClient();
+        String url = "ws://localhost:" + port + "/ws";
+        
+        StompHeaders headers = new StompHeaders();
+        headers.add("Authorization", "Bearer " + donorToken);
+        StompSession session = stompClient.connectAsync(url, new WebSocketHttpHeaders(), headers, new StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
+
+        CompletableFuture<LocationUpdateDto> receivedMessage = new CompletableFuture<>();
+        
+        session.subscribe("/topic/donation/" + donation.getId(), new StompSessionHandlerAdapter() {
+            @Override
+            public Type getPayloadType(StompHeaders headers) {
+                return LocationUpdateDto.class;
+            }
+            @Override
+            public void handleFrame(StompHeaders headers, Object payload) {
+                receivedMessage.complete((LocationUpdateDto) payload);
+            }
+        });
+
+        // Wait a bit for subscription to register
+        Thread.sleep(500);
+
+        // Volunteer posts location
+        LocationUpdateDto update = new LocationUpdateDto();
+        update.setLat(12.34);
+        update.setLng(56.78);
+
+        mockMvc.perform(post("/api/deliveries/" + delivery.getId() + "/location")
+                        .header("Authorization", "Bearer " + volunteerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isOk());
+
+        // Donor should receive it over websocket
+        LocationUpdateDto received = receivedMessage.get(5, TimeUnit.SECONDS);
+        org.junit.jupiter.api.Assertions.assertEquals(12.34, received.getLat());
+        org.junit.jupiter.api.Assertions.assertEquals(56.78, received.getLng());
+        
+        session.disconnect();
     }
     
     @Test
