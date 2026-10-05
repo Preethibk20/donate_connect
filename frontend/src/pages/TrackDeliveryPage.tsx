@@ -69,7 +69,7 @@ export const TrackDeliveryPage: React.FC = () => {
         if (loc.lat && loc.lng) {
           setCurrentLoc({ lat: loc.lat, lng: loc.lng });
           setPath((prev) => [...prev, [loc.lat, loc.lng]]);
-          setLastUpdated(new Date(loc.timestamp));
+          setLastUpdated(new Date());
         }
       } catch (err) {
         console.error('Failed to fetch initial location', err);
@@ -99,7 +99,7 @@ export const TrackDeliveryPage: React.FC = () => {
               if (last && last[0] === loc.lat && last[1] === loc.lng) return prev;
               return [...prev, [loc.lat, loc.lng]];
             });
-            setLastUpdated(new Date(loc.timestamp));
+            setLastUpdated(new Date());
             setIsOffline(false);
           }
         });
@@ -123,7 +123,7 @@ export const TrackDeliveryPage: React.FC = () => {
               if (last && last[0] === loc.lat && last[1] === loc.lng) return prev;
               return [...prev, [loc.lat, loc.lng]];
             });
-            setLastUpdated(new Date(loc.timestamp));
+            setLastUpdated(new Date());
           }
         } catch (e) {
           console.error('Polling failed', e);
@@ -140,13 +140,16 @@ export const TrackDeliveryPage: React.FC = () => {
   // Offline checker
   useEffect(() => {
     const checkOffline = setInterval(() => {
-      if (lastUpdated) {
-        const diff = (new Date().getTime() - lastUpdated.getTime()) / 1000;
-        setIsOffline(diff > 30);
-      }
+      setLastUpdated(prev => {
+        if (prev) {
+          const diff = (Date.now() - prev.getTime()) / 1000;
+          setIsOffline(diff > 30);
+        }
+        return prev;
+      });
     }, 5000);
     return () => clearInterval(checkOffline);
-  }, [lastUpdated]);
+  }, []);
 
   // OSRM Route & ETA fetch (Refreshes every 30 seconds)
   useEffect(() => {

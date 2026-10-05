@@ -133,9 +133,12 @@ describe('TrackDeliveryPage', () => {
     // Ensure we are initially online
     expect(screen.getByText(/Live GPS/i)).toBeInTheDocument();
     
+    // Mock polling to fail so lastUpdated doesn't update
+    vi.mocked(donationApi.getLiveLocation).mockRejectedValue(new Error('Network error'));
+    
     // Simulate time passing > 30s without update to trigger offline state
     act(() => {
-      vi.advanceTimersByTime(35000);
+      vi.advanceTimersByTime(50000);
     });
     
     await waitFor(() => {
@@ -144,9 +147,11 @@ describe('TrackDeliveryPage', () => {
     
     // Check polling fallback. Every 10s it polls if disconnected. 
     // Advance timers to trigger polling.
-    vi.mocked(donationApi.getLiveLocation).mockClear();
+    vi.mocked(donationApi.getLiveLocation).mockReset();
+    vi.mocked(donationApi.getLiveLocation).mockResolvedValue(mockLoc);
     
     act(() => {
+      vi.setSystemTime(new Date(2026, 9, 5, 12, 1, 0));
       vi.advanceTimersByTime(10000);
     });
     

@@ -47,12 +47,15 @@ public class Delivery {
     @Column(name = "delivered_at")
     private LocalDateTime deliveredAt;
 
+    @org.hibernate.annotations.OptimisticLock(excluded = true)
     @Column(name = "last_lat")
     private Double lastLat;
 
+    @org.hibernate.annotations.OptimisticLock(excluded = true)
     @Column(name = "last_lng")
     private Double lastLng;
 
+    @org.hibernate.annotations.OptimisticLock(excluded = true)
     @Column(name = "last_location_at")
     private LocalDateTime lastLocationAt;
 
@@ -68,4 +71,8 @@ public class Delivery {
 
     @Column(name = "proof_image_url")
     private String proofImageUrl;
+
+    @Version
+    @Column(columnDefinition = "bigint default 0 not null")
+    private long version;
 }

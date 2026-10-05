@@ -15,8 +15,7 @@ describe('OtpInput', () => {
     const handleChange = vi.fn();
     const Wrapper = () => {
       const [val, setVal] = useState('');
-      handleChange.mockImplementation(setVal);
-      return <OtpInput value={val} onChange={setVal} length={4} />;
+      return <OtpInput value={val} onChange={(v) => { setVal(v); handleChange(v); }} length={4} />;
     };
 
     render(<Wrapper />);
@@ -45,8 +44,7 @@ describe('OtpInput', () => {
     const handleChange = vi.fn();
     const Wrapper = () => {
       const [val, setVal] = useState('12');
-      handleChange.mockImplementation(setVal);
-      return <OtpInput value={val} onChange={setVal} length={4} />;
+      return <OtpInput value={val} onChange={(v) => { setVal(v); handleChange(v); }} length={4} />;
     };
 
     render(<Wrapper />);

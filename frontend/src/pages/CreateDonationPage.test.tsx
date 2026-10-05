@@ -101,7 +101,15 @@ describe('CreateDonationPage Form Validation', () => {
     
     const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
     if (dateInput) {
-      fireEvent.change(dateInput, { target: { value: dateStr } });
+      dateInput.removeAttribute('min');
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      if (nativeInputValueSetter) {
+        nativeInputValueSetter.call(dateInput, dateStr);
+      } else {
+        dateInput.value = dateStr;
+      }
+      fireEvent.change(dateInput);
+      fireEvent.blur(dateInput);
     }
     
     await user.selectOptions(screen.getByRole('combobox', { name: /Preferred Time Slot/i }), 'MORNING_9_12');
@@ -130,7 +138,15 @@ describe('CreateDonationPage Form Validation', () => {
     
     const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
     if (dateInput) {
-      fireEvent.change(dateInput, { target: { value: dateStr } });
+      dateInput.removeAttribute('min');
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      if (nativeInputValueSetter) {
+        nativeInputValueSetter.call(dateInput, dateStr);
+      } else {
+        dateInput.value = dateStr;
+      }
+      fireEvent.change(dateInput);
+      fireEvent.blur(dateInput);
     }
     
     await user.click(screen.getByRole('button', { name: /Submit Donation Request/i }));

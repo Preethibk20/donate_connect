@@ -73,7 +73,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: [
     {
-      command: 'cd ../backend && .\\mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.config.additional-location=file:e2e/application-e2e.properties" -Dspring-boot.run.profiles=e2e',
+      command: 'cd ../backend && mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=e2e" "-Dspring-boot.run.arguments=--spring.config.additional-location=file:e2e/application-e2e.properties"',
       url: 'http://localhost:8081/api/e2e/ready',
       reuseExistingServer: false,
       timeout: 120000,

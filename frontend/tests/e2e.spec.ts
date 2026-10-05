@@ -86,8 +86,8 @@ test.describe('DonateConnect Full Flow E2E', () => {
 
     // --- 3. NGO Login & Accept Donation ---
     await page.goto('http://localhost:5173/login');
-    await page.fill('input[type="email"]', 'ngo@example.com');
-    await page.fill('input[type="password"]', 'ngo123');
+    await page.fill('input[type="email"]', 'info@akshayapatra.org');
+    await page.fill('input[type="password"]', 'password123');
     await page.click('button[type="submit"]');
 
     // NGO Dashboard should show pending donations
@@ -103,8 +103,8 @@ test.describe('DonateConnect Full Flow E2E', () => {
 
     // --- 4. Courier Login & Claim Delivery ---
     await page.goto('http://localhost:5173/login');
-    await page.fill('input[type="email"]', 'courier@example.com');
-    await page.fill('input[type="password"]', 'courier123');
+    await page.fill('input[type="email"]', 'dispatch@donateconnect.in');
+    await page.fill('input[type="password"]', 'driver123');
     await page.click('button[type="submit"]');
 
     await expect(page).toHaveURL('http://localhost:5173/driver/dashboard');
@@ -141,8 +141,8 @@ test.describe('DonateConnect Full Flow E2E', () => {
     const ngoContext = await browser.newContext();
     const ngoPage = await ngoContext.newPage();
     await ngoPage.goto('http://localhost:5173/login');
-    await ngoPage.fill('input[type="email"]', 'ngo@example.com');
-    await ngoPage.fill('input[type="password"]', 'ngo123');
+    await ngoPage.fill('input[type="email"]', 'info@akshayapatra.org');
+    await ngoPage.fill('input[type="password"]', 'password123');
     await ngoPage.click('button[type="submit"]');
     
     await ngoPage.goto('http://localhost:5173/ngo/dashboard');

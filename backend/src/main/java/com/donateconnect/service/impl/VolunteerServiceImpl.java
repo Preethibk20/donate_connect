@@ -61,6 +61,10 @@ public class VolunteerServiceImpl implements VolunteerService {
                         "This pickup has already been claimed by another volunteer");
                 });
 
+        // Trigger optimistic lock bump on Donation
+        donation.setUpdatedAt(java.time.LocalDateTime.now());
+        donationRepository.save(donation);
+
         User volunteer = userRepository.findById(volunteerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Volunteer user not found with id: " + volunteerId));
 

@@ -29,6 +29,7 @@ public class LocationRestController {
 
     @PostMapping("/{id}/location")
     @PreAuthorize("hasRole('VOLUNTEER')")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<ApiResponse<Void>> updateLocationRest(
             Authentication authentication,
             @PathVariable UUID id,
@@ -59,10 +60,7 @@ public class LocationRestController {
             }
         }
 
-        delivery.setLastLat(location.getLat());
-        delivery.setLastLng(location.getLng());
-        delivery.setLastLocationAt(java.time.LocalDateTime.now());
-        deliveryRepository.save(delivery);
+        deliveryRepository.updateLocation(delivery.getId(), location.getLat(), location.getLng(), java.time.LocalDateTime.now());
 
         messagingTemplate.convertAndSend("/topic/donation/" + delivery.getDonation().getId(), location);
 

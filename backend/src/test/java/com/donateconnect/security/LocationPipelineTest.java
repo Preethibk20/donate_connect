@@ -272,9 +272,8 @@ class LocationPipelineTest {
 
     @Test
     void testWebsocketSubscribeDonorAndNgoAcceptedBeforeVolunteerAssigned() throws Exception {
-        // Temporarily disassociate volunteer
         delivery.setVolunteer(null);
-        deliveryRepository.save(delivery);
+        delivery = deliveryRepository.save(delivery);
 
         WebSocketStompClient stompClient = createStompClient();
         String url = "ws://localhost:" + port + "/ws";

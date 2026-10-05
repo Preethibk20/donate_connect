@@ -12,4 +12,8 @@ import java.util.UUID;
 public interface DeliveryRepository extends JpaRepository<Delivery, UUID> {
     List<Delivery> findByVolunteerId(UUID volunteerId);
     Optional<Delivery> findByDonationId(UUID donationId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Delivery d SET d.lastLat = :lat, d.lastLng = :lng, d.lastLocationAt = :time WHERE d.id = :id")
+    void updateLocation(@org.springframework.data.repository.query.Param("id") UUID id, @org.springframework.data.repository.query.Param("lat") Double lat, @org.springframework.data.repository.query.Param("lng") Double lng, @org.springframework.data.repository.query.Param("time") java.time.LocalDateTime time);
 }

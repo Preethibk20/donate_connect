@@ -212,7 +212,7 @@ export const CreateDonationPage: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {/* NGO Select */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+            <label htmlFor="ngo-select" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
               Select NGO Partner *
             </label>
             {loadingNgos ? (
@@ -226,6 +226,7 @@ export const CreateDonationPage: React.FC = () => {
               </div>
             ) : (
               <select
+                id="ngo-select"
                 {...register('ngoId', { required: 'Please select an NGO' })}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
               >
@@ -245,10 +246,11 @@ export const CreateDonationPage: React.FC = () => {
           {/* Category & Pickup Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label htmlFor="category-select" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                 Category *
               </label>
               <select
+                id="category-select"
                 {...register('category', { required: 'Category is required' })}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
               >
@@ -262,10 +264,11 @@ export const CreateDonationPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label htmlFor="pickup-date" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                 Preferred Pickup Date
               </label>
               <input
+                id="pickup-date"
                 type="date"
                 min={todayInputValue}
                 {...register('pickupDate', {
@@ -281,10 +284,11 @@ export const CreateDonationPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label htmlFor="time-slot" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                 Preferred Time Slot
               </label>
               <select
+                id="time-slot"
                 {...register('pickupTimeSlot', { required: 'Time slot is required' })}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
               >
@@ -302,10 +306,11 @@ export const CreateDonationPage: React.FC = () => {
           {/* Pickup Address & Location */}
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label htmlFor="pickup-address" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                 Pickup Address *
               </label>
               <input
+                id="pickup-address"
                 type="text"
                 placeholder="Enter complete pickup address (e.g. 123 Main St, Apt 4B...)"
                 {...register('pickupAddress', { required: 'Pickup address is required' })}
@@ -346,10 +351,11 @@ export const CreateDonationPage: React.FC = () => {
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+            <label htmlFor="description" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
               Item Description & Condition *
             </label>
             <textarea
+              id="description"
               rows={4}
               placeholder="Describe the items being donated (e.g. 5 winter jackets in good condition, sizes M and L)..."
               {...register('description', {

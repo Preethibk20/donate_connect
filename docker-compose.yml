@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=jdbc:${POSTGRES_PASSWORD:-postgres}ql://db:5432/donateconnect
+      - DB_USERNAME=${POSTGRES_PASSWORD:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - JWT_SECRET=supersecretjwtkeythatislongenoughforhs512andmore
+      - BREVO_SMTP_USER=${BREVO_SMTP_KEY:-test}
+      - BREVO_SMTP_KEY=${BREVO_SMTP_KEY:-test}
+      - APP_SEED_ENABLED=true
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: ${POSTGRES_PASSWORD:-postgres}:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - ${POSTGRES_PASSWORD:-postgres}_DB=donateconnect
+      - ${POSTGRES_PASSWORD:-postgres}_USER=${POSTGRES_PASSWORD:-postgres}
+      - ${POSTGRES_PASSWORD:-postgres}_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    healthcheck:
+      ${BREVO_SMTP_KEY:-test}: ["CMD-SHELL", "pg_isready -U ${POSTGRES_PASSWORD:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

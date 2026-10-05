@@ -76,4 +76,8 @@ public class Donation {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Version
+    @Column(columnDefinition = "bigint default 0 not null")
+    private long version;
 }

@@ -115,3 +115,9 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 ### Known Issues
 - **Race Condition on Claiming**: High-concurrency race condition for two volunteers claiming the same delivery is NOT TESTED and remains an open bug. Backend uses `@Transactional` but lacks explicit `@Version` optimistic locking, meaning isolation level verification under heavy load is unproven.
 - **Cancellation Post-Assignment**: Donor cancellation after a courier is assigned lacks a specific push notification back to the courier.
+
+## Edge Cases Scope Cut
+- donor cancellation = NOT IMPLEMENTED
+- GPS permission denied = NOT TESTED
+- tab-closed-mid-tracking = NOT TESTED
+- other remaining edge cases = NOT TESTED

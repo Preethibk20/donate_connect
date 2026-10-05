@@ -7,6 +7,7 @@ import com.donateconnect.dto.UserResponseDto;
 import com.donateconnect.entity.*;
 import com.donateconnect.exception.ResourceNotFoundException;
 import com.donateconnect.repository.DonationRepository;
+import com.donateconnect.repository.DeliveryRepository;
 import com.donateconnect.repository.NGOProfileRepository;
 import com.donateconnect.repository.StatusHistoryRepository;
 import com.donateconnect.repository.UserRepository;
@@ -36,6 +37,7 @@ public class DonationServiceImpl implements DonationService {
     private final StatusHistoryRepository statusHistoryRepository;
     private final NotificationService notificationService;
     private final GeocodingService geocodingService;
+    private final DeliveryRepository deliveryRepository;
 
     @Override
     @Transactional
@@ -127,6 +129,14 @@ public class DonationServiceImpl implements DonationService {
 
         if (!donation.getNgo().getId().equals(ngoProfile.getId())) {
             throw new AccessDeniedException("Forbidden: You are not authorized to update status for another NGO's donation");
+        }
+
+        if (newStatus == DonationStatus.REJECTED) {
+            boolean hasActiveDelivery = deliveryRepository.existsByDonationIdAndStatusIn(donationId, 
+                List.of(DeliveryStatus.ASSIGNED, DeliveryStatus.ACCEPTED_BY_VOLUNTEER, DeliveryStatus.EN_ROUTE_TO_PICKUP, DeliveryStatus.PICKED_UP, DeliveryStatus.EN_ROUTE_TO_NGO));
+            if (hasActiveDelivery) {
+                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT, "Cannot reject a donation that has already been accepted by a volunteer courier");
+            }
         }
 
         donation.setStatus(newStatus);
