@@ -102,3 +102,18 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 - **No Production DB:** Never connect tests or Playwright directly to the Neon production database. Always use the isolated H2 environment (`application-e2e.properties`).
 - **Do Not Fake Tests:** If a feature cannot be tested automatically (e.g., native mobile GPS), note it in the manual testing table above.
 - **Backend Env:** Do not load `backend/.env` for E2E tests, as it contains sensitive keys and the `APP_SEED_ENABLED=true` flag. The `e2e` profile manages safe defaults.
+
+## 5. Not Covered and Known Issues
+
+### Not Covered
+- **GPS Permission Denied / Geolocation Unavailable**: Not verified via automated E2E tests, only manually.
+- **Courier Reconnecting Mid-trip / Tab Closed**: STOMP reconnection and page lifecycle are tested in component unit tests but lack a full E2E validation script.
+- **Large Photo Upload**: The 10MB limit is handled, but uploading exactly 10MB or boundary sizes isn't tested in Vitest.
+- **Two volunteers claiming the same delivery**: Backend unit test coverage exists for claiming, but a high-concurrency race condition E2E test is not written.
+- **Donor cancelling after assignment / NGO rejecting after courier accepted**: Not tested automatically.
+- **Wrong OTP 3 times then regeneration**: Tested manually, no automated E2E for this edge case.
+
+### Known Issues
+- **OTP Regeneration Limits**: Current logic does not lock out the volunteer or force regeneration automatically after 3 invalid attempts.
+- **Race Condition on Claiming**: Backend uses `@Transactional`, but lacks explicit pessimistic locking on the `Donation` row, meaning high-concurrency claims might still theoretically result in multiple assignments if isolation fails.
+- **Cancellation Post-Assignment**: Donor cancellation after a courier is assigned lacks a specific push notification back to the courier.

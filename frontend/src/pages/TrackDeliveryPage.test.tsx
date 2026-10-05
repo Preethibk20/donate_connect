@@ -67,10 +67,12 @@ describe('TrackDeliveryPage', () => {
     status: 'PICKED_UP',
   };
 
-  const mockLoc = { lat: 28.15, lng: 77.15, timestamp: new Date().toISOString() };
+  let mockLoc: any;
 
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 9, 5, 12, 0, 0)); // Set a fixed system time
+    mockLoc = { lat: 28.15, lng: 77.15, timestamp: new Date().toISOString() };
     vi.clearAllMocks();
     
     vi.mocked(donationApi.getDonationById).mockResolvedValue(mockDonation as any);

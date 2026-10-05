@@ -18,10 +18,13 @@ test.describe('DonateConnect Full Flow E2E', () => {
     // donor@example.com, ngo@example.com, courier@example.com, admin@example.com
     // So we don't need to register them.
 
-    // --- 2. Donor Login & Create Donation ---
-    await page.goto('http://localhost:5173/login');
-    await page.fill('input[type="email"]', 'donor@example.com');
-    await page.fill('input[type="password"]', 'donor123');
+    // --- 2. Donor Register & Create Donation ---
+    await page.goto('http://localhost:5173/register');
+    await page.fill('input[name="fullName"]', 'E2E Donor');
+    await page.fill('input[type="email"]', donorEmail);
+    await page.fill('input[name="password"]', password);
+    await page.fill('input[name="confirmPassword"]', password);
+    await page.selectOption('select[name="role"]', 'DONOR');
     await page.click('button[type="submit"]');
 
     await expect(page).toHaveURL('http://localhost:5173/donations');

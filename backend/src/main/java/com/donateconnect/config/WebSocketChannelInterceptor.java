@@ -54,8 +54,17 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
                 }
             } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
                 String destination = accessor.getDestination();
-                if (destination != null && destination.startsWith("/topic/donation/")) {
-                    UUID id = UUID.fromString(destination.substring("/topic/donation/".length()));
+                if (destination != null) {
+                    if (!destination.matches("^/topic/donation/[0-9a-fA-F-]{36}$")) {
+                        throw new AccessDeniedException("Subscription destination denied");
+                    }
+
+                    UUID id;
+                    try {
+                        id = UUID.fromString(destination.substring("/topic/donation/".length()));
+                    } catch (IllegalArgumentException e) {
+                        throw new AccessDeniedException("Malformed UUID in destination");
+                    }
 
                     UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) accessor.getUser();
                     if (auth == null) {
