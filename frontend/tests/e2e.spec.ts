@@ -81,7 +81,7 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await expect(page).toHaveURL('http://localhost:5173/donations');
 
     // Get the donation ID or just logout
-    await page.locator('button[aria-label="User menu"]').click();
+    await page.locator('button[title="Account menu"]').click();
     await page.click('button:has-text("Sign Out")');
 
     // --- 3. NGO Login & Accept Donation ---
@@ -98,7 +98,7 @@ test.describe('DonateConnect Full Flow E2E', () => {
     const donationCard = page.locator('.donation-card', { hasText: 'These are some E2E test clothes' }).first();
     await donationCard.locator('button:has-text("Accept")').click();
     
-    await page.locator('button[aria-label="User menu"]').click();
+    await page.locator('button[title="Account menu"]').click();
     await page.click('button:has-text("Sign Out")');
 
     // --- 4. Courier Login & Claim Delivery ---
