@@ -20,6 +20,15 @@ test.describe('DonateConnect Full Flow E2E', () => {
 
     page.on('console', msg => console.log('BROWSER CONSOLE:', msg.text()));
     page.on('requestfailed', request => console.log('REQUEST FAILED:', request.url(), request.failure()?.errorText));
+    page.on('response', async response => {
+      if (response.status() >= 400) {
+        console.log(`ERROR RESPONSE HTTP ${response.status()} from ${response.url()}`);
+        console.log(`Request Payload:`, response.request().postData());
+        try {
+          console.log(`Response Body:`, await response.text());
+        } catch(e) { }
+      }
+    });
 
     // --- 2. Donor Login & Create Donation ---
     await page.goto('http://localhost:5173/login');
@@ -49,7 +58,7 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await page.fill('input[type="date"]', tomorrow.toISOString().split('T')[0]);
     
     await page.selectOption('select[name="pickupTimeSlot"]', 'MORNING_9_12');
-    await page.fill('input[name="pickupAddress"]', '123 E2E Test St');
+    await page.fill('input[name="pickupAddress"]', '123 E2E Test St, Bangalore, Karnataka');
     
     // Upload photo
     // Provide a dummy image in memory or from a fixture
@@ -72,7 +81,8 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await expect(page).toHaveURL('http://localhost:5173/donations');
 
     // Get the donation ID or just logout
-    await page.click('button:has-text("Logout")');
+    await page.locator('button[aria-label="User menu"]').click();
+    await page.click('button:has-text("Sign Out")');
 
     // --- 3. NGO Login & Accept Donation ---
     await page.goto('http://localhost:5173/login');
@@ -88,7 +98,8 @@ test.describe('DonateConnect Full Flow E2E', () => {
     const donationCard = page.locator('.donation-card', { hasText: 'These are some E2E test clothes' }).first();
     await donationCard.locator('button:has-text("Accept")').click();
     
-    await page.click('button:has-text("Logout")');
+    await page.locator('button[aria-label="User menu"]').click();
+    await page.click('button:has-text("Sign Out")');
 
     // --- 4. Courier Login & Claim Delivery ---
     await page.goto('http://localhost:5173/login');
@@ -100,12 +111,12 @@ test.describe('DonateConnect Full Flow E2E', () => {
     
     // Go to Available Deliveries
     // The driver dashboard usually lists available ones
-    const deliveryCard = page.locator('.delivery-card', { hasText: '123 E2E Test St' }).first();
+    const deliveryCard = page.locator('.delivery-card', { hasText: '123 E2E Test St, Bangalore' }).first();
     await deliveryCard.locator('button:has-text("Claim")').click();
     
     // Once claimed, it should move to "My Deliveries" or similar, or allow status updates
     // Update status to PICKED_UP
-    const myDelivery = page.locator('.my-delivery-card', { hasText: '123 E2E Test St' }).first();
+    const myDelivery = page.locator('.my-delivery-card', { hasText: '123 E2E Test St, Bangalore' }).first();
     await myDelivery.locator('button:has-text("Update Status")').click();
     await page.selectOption('select[name="status"]', 'PICKED_UP');
     await page.click('button:has-text("Save")');

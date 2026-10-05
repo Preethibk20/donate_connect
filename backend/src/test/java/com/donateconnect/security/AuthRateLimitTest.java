@@ -25,6 +25,9 @@ public class AuthRateLimitTest {
     @Autowired
     private AuthService authService;
 
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.donateconnect.service.EmailService emailService;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -49,10 +52,12 @@ public class AuthRateLimitTest {
         assertDoesNotThrow(() -> {
             authService.resendOtp("ratelimit@test.com", "127.0.0.1");
         });
+        org.mockito.Mockito.verify(emailService, org.mockito.Mockito.never()).sendOtpEmail(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
 
         testUser.setLastOtpSentAt(LocalDateTime.now().minusSeconds(65)); // 65s ago
         userRepository.save(testUser);
         assertDoesNotThrow(() -> authService.resendOtp("ratelimit@test.com", "127.0.0.1"));
+        org.mockito.Mockito.verify(emailService, org.mockito.Mockito.times(1)).sendOtpEmail(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
     }
 
     @Test
@@ -64,11 +69,15 @@ public class AuthRateLimitTest {
         assertDoesNotThrow(() -> {
             authService.resendOtp("ratelimit@test.com", "127.0.0.1");
         });
+        // 0 times because it was reset before this test, wait, actually we want to verify 0 interactions
+        // We can just verify it was never called
+        org.mockito.Mockito.verify(emailService, org.mockito.Mockito.never()).sendOtpEmail(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
 
         // If an hour passed, it should allow again
         testUser.setFirstOtpResendAt(LocalDateTime.now().minusMinutes(65));
         userRepository.save(testUser);
         assertDoesNotThrow(() -> authService.resendOtp("ratelimit@test.com", "127.0.0.1"));
+        org.mockito.Mockito.verify(emailService, org.mockito.Mockito.times(1)).sendOtpEmail(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
     }
 
     @Test
@@ -119,5 +128,6 @@ public class AuthRateLimitTest {
     void testResendOtpGenericResponse() {
         // Resending for non-existent email should silently return without throwing exception
         assertDoesNotThrow(() -> authService.resendOtp("totally_fake@test.com", "127.0.0.1"));
+        org.mockito.Mockito.verify(emailService, org.mockito.Mockito.never()).sendOtpEmail(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
     }
 }

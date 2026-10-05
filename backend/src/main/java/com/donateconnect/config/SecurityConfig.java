@@ -23,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.core.env.Environment;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +32,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final Environment environment;
 
     @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
     private String corsAllowedOrigins;
@@ -89,6 +91,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/lockers", "/api/blockchain", "/api/trades", "/api/sos").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/donations/photo/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers(request -> Arrays.asList(environment.getActiveProfiles()).contains("e2e") && request.getServletPath().startsWith("/api/e2e")).permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
