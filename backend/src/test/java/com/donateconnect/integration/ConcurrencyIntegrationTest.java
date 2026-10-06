@@ -190,4 +190,75 @@ class ConcurrencyIntegrationTest {
         assertEquals(1, successCount, "Exactly one volunteer should successfully claim");
         assertTrue(conflictCount >= 1, "The other volunteer should receive a conflict/bad request");
     }
+
+    @Test
+    void concurrentPingVsStatus_pingDoesNotConflict() throws Exception {
+        // Create donation
+        CreateDonationRequest createRequest = CreateDonationRequest.builder()
+                .ngoId(ngoProfile.getId())
+                .category(Category.CLOTHES)
+                .description("Test description 20 chars min.......")
+                .photoUrls(List.of("test.jpg"))
+                .pickupDate(LocalDate.now().plusDays(1))
+                .pickupAddress("Bangalore")
+                .pickupLat(12.0)
+                .pickupLng(77.0)
+                .build();
+
+        MvcResult createResult = mockMvc.perform(post("/api/donations")
+                .header("Authorization", "Bearer " + donorToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)))
+                .andReturn();
+        String donationId = objectMapper.readTree(createResult.getResponse().getContentAsString()).get("data").get("id").asText();
+
+        // NGO accepts & marks picked up
+        UpdateDonationStatusDto updateDto = new UpdateDonationStatusDto();
+        updateDto.setStatus(DonationStatus.ACCEPTED);
+        mockMvc.perform(patch("/api/ngo/donations/" + donationId + "/status").header("Authorization", "Bearer " + ngoToken).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(updateDto)));
+        updateDto.setStatus(DonationStatus.PICKED_UP);
+        mockMvc.perform(patch("/api/ngo/donations/" + donationId + "/status").header("Authorization", "Bearer " + ngoToken).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(updateDto)));
+
+        // Volunteer claims
+        MvcResult claimResult = mockMvc.perform(post("/api/volunteer/pickups/" + donationId + "/claim").header("Authorization", "Bearer " + volunteer1Token)).andReturn();
+        String deliveryId = objectMapper.readTree(claimResult.getResponse().getContentAsString()).get("data").get("id").asText();
+
+        // Run concurrent ping and status update
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        
+        Callable<Integer> pingTask = () -> {
+            try {
+                LocationUpdateDto loc = new LocationUpdateDto();
+                loc.setLat(12.1); loc.setLng(77.1);
+                MvcResult result = mockMvc.perform(post("/api/deliveries/" + deliveryId + "/location")
+                        .header("Authorization", "Bearer " + volunteer1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loc))).andReturn();
+                return result.getResponse().getStatus();
+            } catch (Exception e) { return 500; }
+        };
+
+        Callable<Integer> statusTask = () -> {
+            try {
+                UpdateDeliveryStatusDto update = new UpdateDeliveryStatusDto();
+                update.setStatus(DeliveryStatus.EN_ROUTE_TO_PICKUP);
+                MvcResult result = mockMvc.perform(patch("/api/volunteer/deliveries/" + deliveryId + "/status")
+                        .header("Authorization", "Bearer " + volunteer1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update))).andReturn();
+                return result.getResponse().getStatus();
+            } catch (Exception e) { return 500; }
+        };
+
+        Future<Integer> f1 = executor.submit(pingTask);
+        Future<Integer> f2 = executor.submit(statusTask);
+
+        int pingStatus = f1.get();
+        int updateStatus = f2.get();
+
+        executor.shutdown();
+
+        assertEquals(200, pingStatus, "Ping should succeed (200)");
+        assertEquals(200, updateStatus, "Status update should succeed (200)");
+    }
 }

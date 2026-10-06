@@ -132,7 +132,7 @@ export const DriverDashboardPage: React.FC = () => {
               {tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between space-y-4"
+                  className="delivery-card bg-slate-900/80 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between space-y-4"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -220,7 +220,7 @@ export const DriverDashboardPage: React.FC = () => {
                 {available.content.map((donation) => (
                   <div
                     key={donation.id}
-                    className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-indigo-500/40 transition-colors"
+                    className="delivery-card bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-indigo-500/40 transition-colors"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">

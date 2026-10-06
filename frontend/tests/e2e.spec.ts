@@ -49,8 +49,9 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await expect(page).toHaveURL('http://localhost:5173/donate/new');
 
     // Fill Donation Form
-    await page.selectOption('select[name="ngoId"]', { label: /Goonj Foundation/i });
-    const goonjNgoId = await page.locator('select[name="ngoId"] option', { hasText: 'Goonj Foundation' }).getAttribute('value');
+    const goonjOption = page.locator('select[name="ngoId"] option', { hasText: 'Goonj Foundation' });
+    const goonjNgoId = await goonjOption.getAttribute('value');
+    await page.selectOption('select[name="ngoId"]', { value: goonjNgoId! });
     await page.selectOption('select[name="category"]', 'CLOTHES');
     
     // Valid Date (tomorrow)
@@ -121,29 +122,25 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await page.fill('input[type="password"]', 'driver123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL('http://localhost:5173/driver/dashboard');
+    await expect(page).toHaveURL('http://localhost:5173/driver-dashboard');
     
-    // Go to Available Deliveries
+    await page.click('button:has-text("Available Pickups")');
+
     // The driver dashboard usually lists available ones
-    const deliveryCard = page.locator('.delivery-card', { hasText: '123 E2E Test St, Bangalore' }).first();
-    await deliveryCard.locator('button:has-text("Claim")').click();
+    const availableCard = page.locator('.delivery-card', { hasText: '123 E2E Test St, Bangalore' }).first();
+    await availableCard.locator('button:has-text("Claim Pickup")').click();
     
-    // Once claimed, it should move to "My Deliveries" or similar, or allow status updates
-    // Update status to PICKED_UP
-    const myDelivery = page.locator('.my-delivery-card', { hasText: '123 E2E Test St, Bangalore' }).first();
-    await myDelivery.locator('button:has-text("Update Status")').click();
-    await page.selectOption('select[name="status"]', 'PICKED_UP');
-    await page.click('button:has-text("Save")');
+    // Once claimed, it should move to "My Deliveries" (My Active Tasks tab)
+    const myDelivery = page.locator('.delivery-card', { hasText: '123 E2E Test St, Bangalore' }).first();
+    await myDelivery.locator('button:has-text("Mark In-Transit")').click();
 
-    // Now track delivery to complete it
-    await myDelivery.locator('a:has-text("Track Delivery")').click();
-    
-    // We are on track page
-    await expect(page.locator('h1')).toContainText('Live Delivery Tracking');
+    // Now track delivery to complete it. The LiveLocationTracker should render "Simulate Route"
+    await myDelivery.locator('button:has-text("Simulate Route")').click();
 
-    // Wait for the Complete Delivery section
-    const completeSection = page.locator('text="Complete Delivery"');
-    await expect(completeSection).toBeVisible();
+    // The Mark Completed button is available
+    const completeBtn = myDelivery.locator('button:has-text("Mark Completed")');
+    await expect(completeBtn).toBeEnabled();
+    await completeBtn.click();
 
     // To enter OTP, we would normally get it from the NGO's email or dashboard. 
     // In our backend, verifyOtp API expects the OTP or maybe the NGO generates it?
