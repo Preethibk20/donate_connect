@@ -76,13 +76,13 @@ export default defineConfig({
     {
       command: 'cd ../backend && mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=e2e" "-Dspring-boot.run.arguments=--spring.config.additional-location=file:e2e/application-e2e.properties" > ../frontend/e2e-backend.log 2>&1',
       url: 'http://localhost:8081/api/e2e/ready',
-      reuseExistingServer: false,
+      reuseExistingServer: true,
       timeout: 120000,
     },
     {
       command: 'npm run dev',
       url: 'http://localhost:5173',
-      reuseExistingServer: false,
+      reuseExistingServer: true,
       timeout: 120000,
       env: {
         E2E_BACKEND_URL: 'http://localhost:8081',

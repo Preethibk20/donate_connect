@@ -106,5 +106,4 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 - **Wrong OTP 3 times then regeneration**: NOT TESTED.
 
 ### Known Issues
-- **Playwright E2E**: Fails at Simulate Route because the backend requires a Delivery entity, but the frontend passes the VolunteerTask ID.
 - **Cancellation Post-Assignment**: Donor cancellation after a courier is assigned lacks a specific push notification back to the courier.

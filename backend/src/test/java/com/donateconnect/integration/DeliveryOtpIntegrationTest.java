@@ -203,4 +203,25 @@ class DeliveryOtpIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("DELIVERED"));
     }
+
+    @Test
+    void volunteerCannotCompleteTaskWithoutOtp() throws Exception {
+        // Create volunteer task to simulate claiming
+        com.donateconnect.entity.VolunteerTask task = com.donateconnect.entity.VolunteerTask.builder()
+                .donation(donation)
+                .volunteer(volunteerUser)
+                .status(com.donateconnect.entity.VolunteerTask.TaskStatus.IN_TRANSIT)
+                .build();
+        task = volunteerTaskRepository.save(task);
+
+        // Attempt to update task status to COMPLETED directly
+        mockMvc.perform(patch("/api/volunteer/pickups/" + task.getId() + "/status?status=COMPLETED")
+                .header("Authorization", "Bearer " + volunteerToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Cannot complete task directly. Use the Delivery OTP endpoint."));
+
+        // Verify donation is NOT DELIVERED
+        Donation updatedDonation = donationRepository.findById(donation.getId()).orElseThrow();
+        assertNotEquals(DonationStatus.DELIVERED, updatedDonation.getStatus());
+    }
 }

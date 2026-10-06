@@ -26,6 +26,7 @@ public class VolunteerServiceImpl implements VolunteerService {
     private final VolunteerTaskRepository volunteerTaskRepository;
     private final DonationRepository donationRepository;
     private final UserRepository userRepository;
+    private final DeliveryRepository deliveryRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -74,8 +75,19 @@ public class VolunteerServiceImpl implements VolunteerService {
                 .status(VolunteerTask.TaskStatus.CLAIMED)
                 .routeNotes("Assigned to volunteer for pickup dispatch.")
                 .build();
+        task = volunteerTaskRepository.save(task);
 
-        return mapTaskToDto(volunteerTaskRepository.save(task));
+        Delivery delivery = new Delivery();
+        delivery.setDonation(donation);
+        delivery.setVolunteer(volunteer);
+        delivery.setStatus(DeliveryStatus.ACCEPTED_BY_VOLUNTEER);
+        delivery.setAssignedAt(java.time.LocalDateTime.now());
+        delivery.setDeliveryOtp(String.format("%06d", new java.security.SecureRandom().nextInt(1000000)));
+        delivery.setDeliveryOtpExpiry(java.time.LocalDateTime.now().plusHours(24));
+        delivery.setDeliveryOtpAttempts(0);
+        deliveryRepository.save(delivery);
+
+        return mapTaskToDto(task);
     }
 
     @Override
@@ -93,16 +105,30 @@ public class VolunteerServiceImpl implements VolunteerService {
         // State machine validation
         validateStatusTransition(task.getStatus(), newStatus);
 
-        task.setStatus(newStatus);
-
-        // Side effect: when task is COMPLETED, update the donation to PICKED_UP
         if (newStatus == VolunteerTask.TaskStatus.COMPLETED) {
+            throw new IllegalArgumentException("Cannot complete task directly. Use the Delivery OTP endpoint.");
+        }
+
+        task.setStatus(newStatus);
+        task = volunteerTaskRepository.save(task);
+
+        if (newStatus == VolunteerTask.TaskStatus.IN_TRANSIT) {
+            Delivery delivery = deliveryRepository.findByDonationId(task.getDonation().getId()).orElse(null);
+            if (delivery != null) {
+                delivery.setStatus(DeliveryStatus.PICKED_UP);
+                deliveryRepository.save(delivery);
+            }
             Donation donation = task.getDonation();
             donation.setStatus(DonationStatus.PICKED_UP);
             donationRepository.save(donation);
+        } else if (newStatus == VolunteerTask.TaskStatus.CANCELLED) {
+            Delivery delivery = deliveryRepository.findByDonationId(task.getDonation().getId()).orElse(null);
+            if (delivery != null) {
+                deliveryRepository.delete(delivery);
+            }
         }
 
-        return mapTaskToDto(volunteerTaskRepository.save(task));
+        return mapTaskToDto(task);
     }
 
     /**
@@ -189,6 +215,7 @@ public class VolunteerServiceImpl implements VolunteerService {
                 .status(t.getStatus())
                 .routeNotes(t.getRouteNotes())
                 .claimedAt(t.getClaimedAt())
+                .deliveryId(deliveryRepository.findByDonationId(t.getDonation().getId()).map(Delivery::getId).orElse(null))
                 .build();
     }
 }

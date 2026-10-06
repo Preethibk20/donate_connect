@@ -244,13 +244,7 @@ class ConcurrencyIntegrationTest {
         // Volunteer claims
         mockMvc.perform(post("/api/volunteer/pickups/" + donationId + "/claim").header("Authorization", "Bearer " + volunteer1Token)).andReturn();
         
-        // Manually create a Delivery since the claim creates a VolunteerTask
-        com.donateconnect.entity.Delivery delivery = com.donateconnect.entity.Delivery.builder()
-                .donation(donationRepository.findById(UUID.fromString(donationId)).orElseThrow())
-                .volunteer(volunteer1)
-                .status(com.donateconnect.entity.DeliveryStatus.ACCEPTED_BY_VOLUNTEER)
-                .build();
-        delivery = deliveryRepository.save(delivery);
+        com.donateconnect.entity.Delivery delivery = deliveryRepository.findByDonationId(UUID.fromString(donationId)).orElseThrow();
         String deliveryId = delivery.getId().toString();
 
         // Run concurrent ping and status update

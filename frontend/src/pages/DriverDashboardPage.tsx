@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getMyVolunteerTasks, getAvailablePickups, claimVolunteerPickup, updateVolunteerTaskStatus } from '../api/volunteerApi';
 import { Donation, PageResponse, VolunteerTask } from '../types';
 import { useToast } from '../context/ToastContext';
@@ -7,6 +8,7 @@ import { LiveLocationTracker } from '../components/LiveLocationTracker';
 type DashboardTab = 'my-tasks' | 'available';
 
 export const DriverDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<DashboardTab>('my-tasks');
   const [tasks, setTasks] = useState<VolunteerTask[]>([]);
   const [available, setAvailable] = useState<PageResponse<Donation> | null>(null);
@@ -170,13 +172,14 @@ export const DriverDashboardPage: React.FC = () => {
                       )}
                     </div>
 
-                    {task.status === 'IN_TRANSIT' && (
-                      <LiveLocationTracker deliveryId={task.id} status={task.status} donation={task.donation} />
+                    {task.status === 'IN_TRANSIT' && task.deliveryId && (
+                      <LiveLocationTracker deliveryId={task.deliveryId} status={task.status} donation={task.donation} />
                     )}
                   </div>
 
                   <div className="border-t border-slate-800 pt-3 flex items-center gap-2">
                     <button
+                      data-testid={`transit-button-${task.id}`}
                       onClick={() => handleStatusChange(task.id, 'IN_TRANSIT')}
                       disabled={task.status !== 'CLAIMED'}
                       className="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-xs font-bold transition-all"
@@ -184,12 +187,13 @@ export const DriverDashboardPage: React.FC = () => {
                       🚚 Mark In-Transit
                     </button>
                     <button
-                      onClick={() => handleStatusChange(task.id, 'COMPLETED')}
+                      data-testid={`complete-button-${task.id}`}
+                      onClick={() => navigate(`/track/${task.donation.id}`)}
                       disabled={task.status !== 'IN_TRANSIT'}
                       className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-bold transition-all flex items-center justify-center gap-1"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Mark Completed
+                      Complete via Tracking
                     </button>
                   </div>
                 </div>

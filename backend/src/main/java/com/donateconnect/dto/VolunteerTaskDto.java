@@ -17,6 +17,7 @@ public class VolunteerTaskDto {
     private UUID id;
     private DonationResponseDto donation;
     private UserResponseDto volunteer;
+    private UUID deliveryId;
     private VolunteerTask.TaskStatus status;
     private String routeNotes;
     private LocalDateTime claimedAt;

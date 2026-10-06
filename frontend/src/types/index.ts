@@ -218,6 +218,7 @@ export interface VolunteerTask {
   id: string;
   donation: Donation;
   volunteer: User;
+  deliveryId?: string;
   status: 'CLAIMED' | 'IN_TRANSIT' | 'COMPLETED' | 'CANCELLED';
   routeNotes?: string;
   claimedAt: string;

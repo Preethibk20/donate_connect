@@ -140,10 +140,11 @@ test.describe('DonateConnect Full Flow E2E', () => {
     // Now track delivery to complete it. The LiveLocationTracker should render "Simulate Route"
     await myDelivery.locator('button:has-text("Simulate Route")').click();
 
-    // The Mark Completed button is available
-    const completeBtn = myDelivery.locator('button:has-text("Mark Completed")');
+    // The Complete via Tracking button is available
+    const completeBtn = myDelivery.locator('button:has-text("Complete via Tracking")');
     await expect(completeBtn).toBeEnabled();
     await completeBtn.click();
+    await expect(page).toHaveURL(new RegExp('.*/track/' + donationId));
 
     // To enter OTP, we would normally get it from the NGO's email or dashboard. 
     // In our backend, verifyOtp API expects the OTP or maybe the NGO generates it?
@@ -155,7 +156,7 @@ test.describe('DonateConnect Full Flow E2E', () => {
     const ngoContext = await browser.newContext();
     const ngoPage = await ngoContext.newPage();
     await ngoPage.goto('http://localhost:5173/login');
-    await ngoPage.fill('input[type="email"]', 'info@akshayapatra.org');
+    await ngoPage.fill('input[type="email"]', 'contact@goonj.org');
     await ngoPage.fill('input[type="password"]', 'password123');
     await ngoPage.click('button[type="submit"]');
     

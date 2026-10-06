@@ -58,6 +58,9 @@ class IntegrationWorkflowTest {
     private StatusHistoryRepository statusHistoryRepository;
 
     @Autowired
+    private com.donateconnect.repository.DeliveryRepository deliveryRepository;
+
+    @Autowired
     private VolunteerTaskRepository volunteerTaskRepository;
 
     @Autowired
@@ -169,17 +172,28 @@ class IntegrationWorkflowTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("IN_TRANSIT"));
 
-        // Step 5: Volunteer marks as completed
-        mockMvc.perform(patch("/api/volunteer/pickups/" + taskId + "/status")
-                        .header("Authorization", "Bearer " + volunteerToken)
-                        .param("status", "COMPLETED"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("COMPLETED"));
+        // Step 5: Volunteer completes delivery with OTP
+        String deliveryId = objectMapper.readTree(claimResult.getResponse().getContentAsString())
+                .get("data").get("deliveryId").asText();
 
-        // Step 6: Verify donation is now PICKED_UP
+        com.donateconnect.entity.Delivery delivery = deliveryRepository.findById(UUID.fromString(deliveryId)).orElseThrow();
+        String otp = delivery.getDeliveryOtp();
+
+        mockMvc.perform(multipart("/api/volunteer/deliveries/" + deliveryId + "/complete")
+                        .file(new org.springframework.mock.web.MockMultipartFile("proofImage", "proof.png", "image/png", "dummy image content".getBytes()))
+                        .param("otp", otp)
+                        .header("Authorization", "Bearer " + volunteerToken)
+                        .with(request -> {
+                            request.setMethod("POST");
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("DELIVERED"));
+
+        // Step 6: Verify donation is now DELIVERED
         Donation finalDonation = donationRepository.findById(UUID.fromString(donationId)).orElseThrow();
-        assertEquals(DonationStatus.PICKED_UP, finalDonation.getStatus(),
-                "Donation should be PICKED_UP after volunteer marks task COMPLETED");
+        assertEquals(DonationStatus.DELIVERED, finalDonation.getStatus(),
+                "Donation should be DELIVERED after volunteer completes delivery");
 
         // Step 7: Verify Status History has entries for the lifecycle
         List<StatusHistory> historyEntries = statusHistoryRepository.findAll().stream()

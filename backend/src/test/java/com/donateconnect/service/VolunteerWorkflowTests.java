@@ -213,8 +213,8 @@ class VolunteerWorkflowTests {
         mockMvc.perform(patch("/api/volunteer/pickups/" + taskId + "/status")
                         .header("Authorization", "Bearer " + volunteerToken)
                         .param("status", "COMPLETED"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("COMPLETED"));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Cannot complete task directly. Use the Delivery OTP endpoint."));
     }
 
     @Test
@@ -232,13 +232,13 @@ class VolunteerWorkflowTests {
                         .param("status", "IN_TRANSIT"))
                 .andExpect(status().isOk());
 
-        // Complete
+        // Complete should be rejected
         mockMvc.perform(patch("/api/volunteer/pickups/" + taskId + "/status")
                         .header("Authorization", "Bearer " + volunteerToken)
                         .param("status", "COMPLETED"))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
 
-        // Verify donation is now PICKED_UP
+        // Verify donation is NOT DELIVERED, but still PICKED_UP
         Donation updatedDonation = donationRepository.findById(acceptedDonation.getId()).orElseThrow();
         assertEquals(DonationStatus.PICKED_UP, updatedDonation.getStatus());
     }
