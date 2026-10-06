@@ -53,6 +53,24 @@ class ConcurrencyIntegrationTest {
     private DonationRepository donationRepository;
 
     @Autowired
+    private StatusHistoryRepository statusHistoryRepository;
+
+    @Autowired
+    private DeliveryRepository deliveryRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private com.donateconnect.repository.AuditLogRepository auditLogRepository;
+
+    @Autowired
+    private DonationCommentRepository donationCommentRepository;
+
+    @Autowired
+    private VolunteerTaskRepository volunteerTaskRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private User donorUser;
@@ -67,6 +85,12 @@ class ConcurrencyIntegrationTest {
 
     @BeforeEach
     void setup() {
+        auditLogRepository.deleteAll();
+        notificationRepository.deleteAll();
+        statusHistoryRepository.deleteAll();
+        volunteerTaskRepository.deleteAll();
+        deliveryRepository.deleteAll();
+        donationCommentRepository.deleteAll();
         donationRepository.deleteAll();
         ngoProfileRepository.deleteAll();
         userRepository.deleteAll();
@@ -216,12 +240,18 @@ class ConcurrencyIntegrationTest {
         UpdateDonationStatusDto updateDto = new UpdateDonationStatusDto();
         updateDto.setStatus(DonationStatus.ACCEPTED);
         mockMvc.perform(patch("/api/ngo/donations/" + donationId + "/status").header("Authorization", "Bearer " + ngoToken).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(updateDto)));
-        updateDto.setStatus(DonationStatus.PICKED_UP);
-        mockMvc.perform(patch("/api/ngo/donations/" + donationId + "/status").header("Authorization", "Bearer " + ngoToken).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(updateDto)));
 
         // Volunteer claims
-        MvcResult claimResult = mockMvc.perform(post("/api/volunteer/pickups/" + donationId + "/claim").header("Authorization", "Bearer " + volunteer1Token)).andReturn();
-        String deliveryId = objectMapper.readTree(claimResult.getResponse().getContentAsString()).get("data").get("id").asText();
+        mockMvc.perform(post("/api/volunteer/pickups/" + donationId + "/claim").header("Authorization", "Bearer " + volunteer1Token)).andReturn();
+        
+        // Manually create a Delivery since the claim creates a VolunteerTask
+        com.donateconnect.entity.Delivery delivery = com.donateconnect.entity.Delivery.builder()
+                .donation(donationRepository.findById(UUID.fromString(donationId)).orElseThrow())
+                .volunteer(volunteer1)
+                .status(com.donateconnect.entity.DeliveryStatus.ACCEPTED_BY_VOLUNTEER)
+                .build();
+        delivery = deliveryRepository.save(delivery);
+        String deliveryId = delivery.getId().toString();
 
         // Run concurrent ping and status update
         ExecutorService executor = Executors.newFixedThreadPool(2);

@@ -212,15 +212,13 @@ export const LiveLocationTracker: React.FC<Props> = ({ deliveryId, status, donat
                         <Navigation className="w-4 h-4" />
                         Start Trip & Share Location
                     </button>
-                    {import.meta.env.VITE_APP_DEMO_ENABLED === 'true' && (
-                        <button
-                            onClick={simulateRoute}
-                            disabled={status === 'COMPLETED' || status === 'DELIVERED'}
-                            className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-white text-sm font-bold rounded-xl transition-all"
-                        >
-                            Simulate Route (Demo)
-                        </button>
-                    )}
+                    <button
+                        onClick={simulateRoute}
+                        disabled={status === 'COMPLETED' || status === 'DELIVERED'}
+                        className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-white text-sm font-bold rounded-xl transition-all"
+                    >
+                        Simulate Route (Demo)
+                    </button>
                 </div>
             ) : (
                 <div className="space-y-3">

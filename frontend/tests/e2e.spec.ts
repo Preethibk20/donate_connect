@@ -87,11 +87,14 @@ test.describe('DonateConnect Full Flow E2E', () => {
     const requestBody = donationResponse.request().postData() || '{}';
     const parsedRequest = JSON.parse(requestBody);
     const responseBody = await donationResponse.text();
+    const parsedResponse = JSON.parse(responseBody);
+    const donationId = parsedResponse.data?.id;
     console.log("DONATION POST REQUEST PAYLOAD: " + requestBody);
     console.log("DONATION POST RESPONSE STATUS: " + donationResponse.status());
     console.log("DONATION POST RESPONSE BODY: " + responseBody);
 
     expect(parsedRequest.ngoId).toBe(goonjNgoId);
+    expect(donationId).toBeTruthy();
 
     await expect(page).toHaveURL('http://localhost:5173/donations');
 
@@ -110,7 +113,7 @@ test.describe('DonateConnect Full Flow E2E', () => {
     
     // Find the donation card and Accept
     // Wait for the specific donation text
-    const donationCard = page.locator('.donation-card', { hasText: 'These are some E2E test clothes' }).first();
+    const donationCard = page.locator(`[data-testid="donation-card-${donationId}"]`);
     await donationCard.locator('button:has-text("Accept")').click();
     
     await page.locator('button[title="Account menu"]').click();
@@ -127,11 +130,11 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await page.click('button:has-text("Available Pickups")');
 
     // The driver dashboard usually lists available ones
-    const availableCard = page.locator('.delivery-card', { hasText: '123 E2E Test St, Bangalore' }).first();
-    await availableCard.locator('button:has-text("Claim Pickup")').click();
+    const availableCard = page.locator(`[data-testid="available-card-${donationId}"]`);
+    await availableCard.locator('[data-testid="claim-pickup-btn"]').click();
     
     // Once claimed, it should move to "My Deliveries" (My Active Tasks tab)
-    const myDelivery = page.locator('.delivery-card', { hasText: '123 E2E Test St, Bangalore' }).first();
+    const myDelivery = page.locator(`[data-testid="delivery-card-${donationId}"]`);
     await myDelivery.locator('button:has-text("Mark In-Transit")').click();
 
     // Now track delivery to complete it. The LiveLocationTracker should render "Simulate Route"
@@ -158,8 +161,7 @@ test.describe('DonateConnect Full Flow E2E', () => {
     
     await ngoPage.goto('http://localhost:5173/ngo/dashboard');
     // Assume the NGO can see the OTP on the donation details
-    await ngoPage.locator('.donation-card', { hasText: 'These are some E2E test clothes' }).first().click();
-    
+    await ngoPage.locator(`[data-testid="donation-card-${donationId}"]`).first().click();
     // Find OTP in details modal
     const otpText = await ngoPage.locator('[data-testid="delivery-otp"]').innerText();
     
