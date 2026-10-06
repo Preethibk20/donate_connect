@@ -77,6 +77,10 @@ public class VolunteerServiceImpl implements VolunteerService {
                 .build();
         task = volunteerTaskRepository.save(task);
 
+        if (deliveryRepository.findByDonationId(donation.getId()).isPresent()) {
+            throw new org.springframework.dao.DataIntegrityViolationException("Delivery already exists for donation");
+        }
+
         Delivery delivery = new Delivery();
         delivery.setDonation(donation);
         delivery.setVolunteer(volunteer);

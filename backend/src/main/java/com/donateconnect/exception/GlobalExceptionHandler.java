@@ -55,9 +55,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-        log.warn("Data integrity violation: ", ex);
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error("Action could not be completed because this resource was already updated or claimed by someone else."));
+        Throwable cause = ex.getMostSpecificCause();
+        if (cause instanceof java.sql.SQLException sqlEx) {
+            String sqlState = sqlEx.getSQLState();
+            // 23505 is the SQL state for unique_violation
+            if ("23505".equals(sqlState) || (sqlState != null && sqlState.startsWith("23"))) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.error("Donation is already claimed."));
+            }
+        } else if (ex.getMessage() != null && ex.getMessage().contains("Delivery already exists for donation")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error("Donation is already claimed."));
+        }
+        log.error("Unhandled data integrity violation", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("A database constraint error occurred."));
     }
 
 

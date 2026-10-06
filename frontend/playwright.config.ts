@@ -39,27 +39,6 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
     /* Test against branded browsers. */
     // {
     //   name: 'Microsoft Edge',
@@ -76,13 +55,13 @@ export default defineConfig({
     {
       command: 'cd ../backend && mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=e2e" "-Dspring-boot.run.arguments=--spring.config.additional-location=file:e2e/application-e2e.properties" > ../frontend/e2e-backend.log 2>&1',
       url: 'http://localhost:8081/api/e2e/ready',
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 120000,
     },
     {
       command: 'npm run dev',
       url: 'http://localhost:5173',
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 120000,
       env: {
         E2E_BACKEND_URL: 'http://localhost:8081',

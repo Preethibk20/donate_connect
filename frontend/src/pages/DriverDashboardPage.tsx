@@ -224,6 +224,7 @@ export const DriverDashboardPage: React.FC = () => {
                 {available.content.map((donation) => (
                   <div
                     key={donation.id}
+                    data-testid={`available-card-${donation.id}`}
                     className="delivery-card bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-indigo-500/40 transition-colors"
                   >
                     <div>
@@ -255,6 +256,7 @@ export const DriverDashboardPage: React.FC = () => {
                     </div>
 
                     <button
+                      data-testid="claim-pickup-btn"
                       onClick={() => handleClaim(donation.id)}
                       disabled={claiming === donation.id}
                       className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold transition-all flex items-center justify-center gap-2"

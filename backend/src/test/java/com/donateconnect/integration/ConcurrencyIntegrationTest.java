@@ -137,7 +137,7 @@ class ConcurrencyIntegrationTest {
         volunteer2Token = jwtUtils.generateToken(volunteer2);
     }
 
-    @Test
+    @org.junit.jupiter.api.RepeatedTest(20)
     void concurrentVolunteerClaim_onlyOneWins() throws Exception {
         // Create donation
         CreateDonationRequest createRequest = CreateDonationRequest.builder()
