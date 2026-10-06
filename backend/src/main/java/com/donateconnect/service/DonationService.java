@@ -13,6 +13,7 @@ public interface DonationService {
     DonationResponseDto createDonation(UUID donorUserId, CreateDonationRequest request);
     Page<DonationResponseDto> getDonationsByDonor(UUID donorUserId, Pageable pageable);
     DonationResponseDto getDonationByDonorAndId(UUID donorUserId, UUID donationId);
+    DonationResponseDto getDonationById(UUID donationId, com.donateconnect.entity.User user);
     Page<DonationResponseDto> getDonationsByNgoUser(UUID ngoUserId, Pageable pageable);
     DonationResponseDto updateDonationStatus(UUID ngoUserId, UUID donationId, DonationStatus status);
     Page<DonationResponseDto> getAdminDonations(Category category, DonationStatus status, UUID ngoId, Pageable pageable);

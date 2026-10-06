@@ -59,7 +59,7 @@ public class GlobalExceptionHandler {
         if (cause instanceof java.sql.SQLException sqlEx) {
             String sqlState = sqlEx.getSQLState();
             // 23505 is the SQL state for unique_violation
-            if ("23505".equals(sqlState) || (sqlState != null && sqlState.startsWith("23"))) {
+            if ("23505".equals(sqlState) && sqlEx.getMessage() != null && sqlEx.getMessage().contains("donation_id")) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(ApiResponse.error("Donation is already claimed."));
             }

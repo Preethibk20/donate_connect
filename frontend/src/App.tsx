@@ -57,6 +57,7 @@ const AppShell: React.FC = () => {
               {/* Protected Routes (Shared) */}
               <Route element={<ProtectedRoute allowedRoles={['DONOR', 'NGO', 'VOLUNTEER', 'ADMIN', 'CORPORATE']} />}>
                 <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/donations/:id/track" element={<TrackDeliveryPage />} />
               </Route>
 
               {/* Protected Donor Routes */}
@@ -65,7 +66,6 @@ const AppShell: React.FC = () => {
                 <Route path="/donate/new" element={<CreateDonationPage />} />
                 <Route path="/donations/new" element={<Navigate to="/donate/new" replace />} />
                 <Route path="/donations" element={<MyDonationsPage />} />
-                <Route path="/donations/:id/track" element={<TrackDeliveryPage />} />
                 <Route path="/my-donations" element={<Navigate to="/donations" replace />} />
               </Route>
 

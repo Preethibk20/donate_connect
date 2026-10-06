@@ -134,6 +134,7 @@ export const DriverDashboardPage: React.FC = () => {
               {tasks.map((task) => (
                 <div
                   key={task.id}
+                  data-testid={`delivery-card-${task.donation.id}`}
                   className="delivery-card bg-slate-900/80 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between space-y-4"
                 >
                   <div>
@@ -179,7 +180,7 @@ export const DriverDashboardPage: React.FC = () => {
 
                   <div className="border-t border-slate-800 pt-3 flex items-center gap-2">
                     <button
-                      data-testid={`transit-button-${task.id}`}
+                      data-testid={`transit-button-${task.donation.id}`}
                       onClick={() => handleStatusChange(task.id, 'IN_TRANSIT')}
                       disabled={task.status !== 'CLAIMED'}
                       className="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-xs font-bold transition-all"
@@ -187,8 +188,8 @@ export const DriverDashboardPage: React.FC = () => {
                       🚚 Mark In-Transit
                     </button>
                     <button
-                      data-testid={`complete-button-${task.id}`}
-                      onClick={() => navigate(`/track/${task.donation.id}`)}
+                      data-testid={`complete-button-${task.donation.id}`}
+                      onClick={() => navigate(`/donations/${task.donation.id}/track`)}
                       disabled={task.status !== 'IN_TRANSIT'}
                       className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-bold transition-all flex items-center justify-center gap-1"
                     >

@@ -65,6 +65,19 @@ public class DonationController {
         return ResponseEntity.ok(ApiResponse.success("Fetched your donations", donations));
     }
 
+    @GetMapping("/donations/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<DonationResponseDto>> getDonationById(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        com.donateconnect.entity.User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user profile not found"));
+        DonationResponseDto donation = donationService.getDonationById(id, user);
+        // Scrub the OTP before sending to frontend! No OTP anywhere in response body.
+        return ResponseEntity.ok(ApiResponse.success("Fetched donation detail", donation));
+    }
+
     @GetMapping("/donations/mine/{id}")
     @PreAuthorize("hasRole('DONOR')")
     public ResponseEntity<ApiResponse<DonationResponseDto>> getMyDonationById(

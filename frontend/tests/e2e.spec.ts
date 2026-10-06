@@ -106,7 +106,10 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await page.goto('http://localhost:5173/login');
     await page.fill('input[type="email"]', 'contact@goonj.org');
     await page.fill('input[type="password"]', 'password123');
-    await page.click('button[type="submit"]');
+    await Promise.all([
+      page.waitForResponse('**/api/auth/login'),
+      page.click('button[type="submit"]')
+    ]);
 
     // NGO Dashboard should show pending donations
     await expect(page).toHaveURL('http://localhost:5173/ngo-dashboard');
@@ -123,7 +126,10 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await page.goto('http://localhost:5173/login');
     await page.fill('input[type="email"]', 'dispatch@donateconnect.in');
     await page.fill('input[type="password"]', 'driver123');
-    await page.click('button[type="submit"]');
+    await Promise.all([
+      page.waitForResponse('**/api/auth/login'),
+      page.click('button[type="submit"]')
+    ]);
 
     await expect(page).toHaveURL('http://localhost:5173/driver-dashboard');
     
@@ -135,16 +141,16 @@ test.describe('DonateConnect Full Flow E2E', () => {
     
     // Once claimed, it should move to "My Deliveries" (My Active Tasks tab)
     const myDelivery = page.locator(`[data-testid="delivery-card-${donationId}"]`);
-    await myDelivery.locator('button:has-text("Mark In-Transit")').click();
+    await myDelivery.locator(`[data-testid="transit-button-${donationId}"]`).click();
 
-    // Now track delivery to complete it. The LiveLocationTracker should render "Simulate Route"
-    await myDelivery.locator('button:has-text("Simulate Route")').click();
-
-    // The Complete via Tracking button is available
-    const completeBtn = myDelivery.locator('button:has-text("Complete via Tracking")');
+    // Now track delivery to complete it. The DriverDashboardPage should render "Complete via Tracking"
+    const completeBtn = myDelivery.locator(`[data-testid="complete-button-${donationId}"]`);
     await expect(completeBtn).toBeEnabled();
     await completeBtn.click();
-    await expect(page).toHaveURL(new RegExp('.*/track/' + donationId));
+    await expect(page).toHaveURL(new RegExp('.*/donations/' + donationId + '/track'));
+
+    // Wait for the modal (Verification Form) to render. It requires LiveLocationTracker to load or we can just wait for OTP input
+    await page.waitForSelector('input[inputmode="numeric"]');
 
     // To enter OTP, we would normally get it from the NGO's email or dashboard. 
     // In our backend, verifyOtp API expects the OTP or maybe the NGO generates it?
@@ -158,13 +164,17 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await ngoPage.goto('http://localhost:5173/login');
     await ngoPage.fill('input[type="email"]', 'contact@goonj.org');
     await ngoPage.fill('input[type="password"]', 'password123');
-    await ngoPage.click('button[type="submit"]');
+    await Promise.all([
+      ngoPage.waitForResponse('**/api/auth/login'),
+      ngoPage.click('button[type="submit"]')
+    ]);
+    await expect(ngoPage).toHaveURL('http://localhost:5173/ngo-dashboard');
     
-    await ngoPage.goto('http://localhost:5173/ngo/dashboard');
     // Assume the NGO can see the OTP on the donation details
-    await ngoPage.locator(`[data-testid="donation-card-${donationId}"]`).first().click();
+    const ngoDonationCard = ngoPage.locator(`[data-testid="donation-card-${donationId}"]`);
+    await ngoDonationCard.locator('button:has-text("Show OTP")').click();
     // Find OTP in details modal
-    const otpText = await ngoPage.locator('[data-testid="delivery-otp"]').innerText();
+    const otpText = await ngoDonationCard.locator('[data-testid="delivery-otp"]').innerText();
     
     // Back to courier page
     await page.bringToFront();

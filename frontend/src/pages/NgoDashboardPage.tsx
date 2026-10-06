@@ -298,7 +298,7 @@ export const NgoDashboardPage: React.FC = () => {
                       <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
                     ) : otpData[donation.id] ? (
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-lg font-bold text-amber-400 tracking-widest">{otpData[donation.id]}</span>
+                        <span data-testid="delivery-otp" className="font-mono text-lg font-bold text-amber-400 tracking-widest">{otpData[donation.id]}</span>
                         <button onClick={() => handleRegenerateOtp(donation.id)} title="Regenerate OTP" className="text-amber-500 hover:text-amber-300">
                           <RotateCcw className="w-4 h-4" />
                         </button>

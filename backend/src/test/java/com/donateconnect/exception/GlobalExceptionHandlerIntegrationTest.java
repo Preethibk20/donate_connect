@@ -45,6 +45,20 @@ class GlobalExceptionHandlerIntegrationTest {
             public void throwSizeLimit() {
                 throw new MaxUploadSizeExceededException(1000);
             }
+
+            @GetMapping("/api/test/fk-violation")
+            public void throwFkViolation() {
+                throw new org.springframework.dao.DataIntegrityViolationException(
+                    "fk violation", new java.sql.SQLException("FK violation", "23503")
+                );
+            }
+
+            @GetMapping("/api/test/unique-violation")
+            public void throwUniqueViolation() {
+                throw new org.springframework.dao.DataIntegrityViolationException(
+                    "unique violation", new java.sql.SQLException("donation_id violated", "23505")
+                );
+            }
         }
     }
 
@@ -92,5 +106,25 @@ class GlobalExceptionHandlerIntegrationTest {
         mockMvc.perform(get("/api/test/size").header("Authorization", "Bearer " + token))
                 .andExpect(status().isPayloadTooLarge())
                 .andExpect(jsonPath("$.message").value("File size exceeds the maximum permitted limit."));
+    }
+
+    @Test
+    void fkViolation_doesNotReturn409() throws Exception {
+        com.donateconnect.entity.User user = com.donateconnect.entity.User.builder()
+            .email("test4@exception.com").id(java.util.UUID.randomUUID()).role(com.donateconnect.entity.Role.DONOR).build();
+        String token = jwtUtils.generateToken(user);
+        mockMvc.perform(get("/api/test/fk-violation").header("Authorization", "Bearer " + token))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value("A database constraint error occurred."));
+    }
+
+    @Test
+    void uniqueViolation_returns409() throws Exception {
+        com.donateconnect.entity.User user = com.donateconnect.entity.User.builder()
+            .email("test5@exception.com").id(java.util.UUID.randomUUID()).role(com.donateconnect.entity.Role.DONOR).build();
+        String token = jwtUtils.generateToken(user);
+        mockMvc.perform(get("/api/test/unique-violation").header("Authorization", "Bearer " + token))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Donation is already claimed."));
     }
 }

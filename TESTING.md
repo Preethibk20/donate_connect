@@ -107,3 +107,7 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 
 ### Known Issues
 - **Cancellation Post-Assignment**: Donor cancellation after a courier is assigned lacks a specific push notification back to the courier.
+
+
+## Concurrency Testing
+- The double-claim concurrency test was verified on the embedded H2 database (since Docker was unavailable locally), not PostgreSQL.

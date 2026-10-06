@@ -107,6 +107,32 @@ public class DonationServiceImpl implements DonationService {
                         "Donation not found or does not belong to the current user"));
         return mapToDto(donation);
     }
+    @Override
+    @Transactional(readOnly = true)
+    public DonationResponseDto getDonationById(UUID donationId, com.donateconnect.entity.User user) {
+        Donation donation = donationRepository.findById(donationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Donation not found"));
+
+        boolean isOwner = false;
+        if (user.getRole() == com.donateconnect.entity.Role.ADMIN) {
+            isOwner = true;
+        } else if (user.getRole() == com.donateconnect.entity.Role.DONOR && donation.getDonor().getId().equals(user.getId())) {
+            isOwner = true;
+        } else if (user.getRole() == com.donateconnect.entity.Role.NGO && donation.getNgo() != null && donation.getNgo().getUser().getId().equals(user.getId())) {
+            isOwner = true;
+        } else if (user.getRole() == com.donateconnect.entity.Role.VOLUNTEER) {
+            java.util.Optional<com.donateconnect.entity.Delivery> optionalDelivery = deliveryRepository.findByDonationId(donationId);
+            if (optionalDelivery.isPresent() && optionalDelivery.get().getVolunteer() != null && optionalDelivery.get().getVolunteer().getId().equals(user.getId())) {
+                isOwner = true;
+            }
+        }
+
+        if (!isOwner) {
+            throw new org.springframework.security.access.AccessDeniedException("Access denied");
+        }
+
+        return mapToDto(donation);
+    }
 
     @Override
     @Transactional(readOnly = true)

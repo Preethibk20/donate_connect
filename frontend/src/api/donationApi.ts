@@ -25,7 +25,7 @@ export const getMyDonations = async (page = 0, size = 10): Promise<PageResponse<
 };
 
 export const getDonationById = async (id: string): Promise<Donation> => {
-  const response = await apiClient.get<ApiResponse<Donation>>(`/donations/mine/${id}`);
+  const response = await apiClient.get<ApiResponse<Donation>>(`/donations/${id}`);
   return response.data.data;
 };
 
@@ -84,7 +84,7 @@ export const getAdminDonations = async (
 };
 
 export const getLiveLocation = async (donationId: string) => {
-  const response = await apiClient.get(`/donations/${donationId}/location`);
+  const response = await apiClient.get(`/deliveries/donations/${donationId}/location`);
   return response.data.data;
 };
 
