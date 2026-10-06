@@ -224,7 +224,7 @@ export const NgoDashboardPage: React.FC = () => {
           {filteredDonations.map((donation) => (
             <div
               key={donation.id}
-              className="bg-slate-900/60 border border-slate-800 hover:border-indigo-500/40 rounded-2xl p-6 transition-all flex flex-col justify-between"
+              className="donation-card bg-slate-900/60 border border-slate-800 hover:border-indigo-500/40 rounded-2xl p-6 transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">

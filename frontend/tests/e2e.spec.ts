@@ -49,7 +49,8 @@ test.describe('DonateConnect Full Flow E2E', () => {
     await expect(page).toHaveURL('http://localhost:5173/donate/new');
 
     // Fill Donation Form
-    await page.selectOption('select[name="ngoId"]', { index: 1 }); // select first NGO
+    await page.selectOption('select[name="ngoId"]', { label: /Goonj Foundation/i });
+    const goonjNgoId = await page.locator('select[name="ngoId"] option', { hasText: 'Goonj Foundation' }).getAttribute('value');
     await page.selectOption('select[name="category"]', 'CLOTHES');
     
     // Valid Date (tomorrow)
@@ -82,11 +83,14 @@ test.describe('DonateConnect Full Flow E2E', () => {
       page.click('button:has-text("Submit Donation Request")')
     ]);
 
-    const requestBody = donationResponse.request().postData();
+    const requestBody = donationResponse.request().postData() || '{}';
+    const parsedRequest = JSON.parse(requestBody);
     const responseBody = await donationResponse.text();
     console.log("DONATION POST REQUEST PAYLOAD: " + requestBody);
     console.log("DONATION POST RESPONSE STATUS: " + donationResponse.status());
     console.log("DONATION POST RESPONSE BODY: " + responseBody);
+
+    expect(parsedRequest.ngoId).toBe(goonjNgoId);
 
     await expect(page).toHaveURL('http://localhost:5173/donations');
 
