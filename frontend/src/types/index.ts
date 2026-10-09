@@ -189,7 +189,10 @@ export interface CreateRatingRequest {
 
 export interface NgoUrgentNeed {
   id: string;
-  ngo: NGOProfile;
+  ngo?: NGOProfile;
+  ngoId?: string;
+  ngoName?: string;
+  ngoCity?: string;
   title: string;
   description: string;
   category: Category;
