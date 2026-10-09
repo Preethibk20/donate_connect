@@ -91,8 +91,8 @@ export const LiveLocationTracker: React.FC<Props> = ({ deliveryId, status, donat
 
     const simulateRoute = async () => {
         if (!donation) return;
-        const startLat = donation.pickupLat || 28.6139;
-        const startLng = donation.pickupLng || 77.2090;
+        const startLat = donation.pickupLat || 12.9716;
+        const startLng = donation.pickupLng || 77.5946;
         const endLat = donation.ngo?.latitude || 28.6439;
         const endLng = donation.ngo?.longitude || 77.2390;
 

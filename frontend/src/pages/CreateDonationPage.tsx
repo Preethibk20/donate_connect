@@ -328,7 +328,7 @@ export const CreateDonationPage: React.FC = () => {
               </label>
               <div className="h-[250px] w-full rounded-2xl overflow-hidden border border-slate-800 relative z-0">
                 <MapContainer
-                  center={[28.6139, 77.2090]} // Default center (New Delhi)
+                  center={[12.9716, 77.5946]} // Default center (Bengaluru)
                   zoom={12}
                   style={{ height: '100%', width: '100%' }}
                 >

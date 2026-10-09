@@ -102,7 +102,7 @@ export const LiveDriverTrackerModal: React.FC<LiveDriverTrackerModalProps> = ({
 
           {/* Bottom GPS Coordinates readout */}
           <div className="relative z-10 flex items-center justify-between text-[10px] text-slate-400 font-mono border-t border-slate-800/80 pt-2">
-            <span>Lat: 28.6139° N, Long: 77.2090° E</span>
+            <span>Lat: 12.9716° N, Long: 77.5946° E</span>
             <span className="text-indigo-400 font-semibold">{progress}% Route Completed</span>
           </div>
         </div>

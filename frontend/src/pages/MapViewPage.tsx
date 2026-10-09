@@ -28,7 +28,7 @@ export const MapViewPage: React.FC = () => {
             Interactive Indian NGO & Pickup Hub Map
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Discover verified Indian non-profit partners and collection centers across New Delhi, Mumbai, Bengaluru, and Chennai
+            Discover verified Indian non-profit partners and collection centers across Bengaluru, Mumbai, Bengaluru, and Chennai
           </p>
         </div>
       </div>
@@ -85,7 +85,7 @@ export const MapViewPage: React.FC = () => {
                 {selectedNgo ? `Active Pin: ${selectedNgo.name}` : 'Select an NGO from directory'}
               </span>
             </div>
-            <span className="text-[11px] text-slate-400 font-mono">GPS Grid: 28.6139° N, 77.2090° E (India Metro Grid)</span>
+            <span className="text-[11px] text-slate-400 font-mono">GPS Grid: 12.9716° N, 77.5946° E (India Metro Grid)</span>
           </div>
 
           {/* Interactive Pin Showcase Canvas */}

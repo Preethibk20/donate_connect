@@ -204,8 +204,8 @@ export const TrackDeliveryPage: React.FC = () => {
   }
 
   const pickupPoint: [number, number] = [
-    donation?.pickupLat || (path.length > 0 ? path[0][0] : 28.6139),
-    donation?.pickupLng || (path.length > 0 ? path[0][1] : 77.2090)
+    donation?.pickupLat || (path.length > 0 ? path[0][0] : 12.9716),
+    donation?.pickupLng || (path.length > 0 ? path[0][1] : 77.5946)
   ];
   const ngoLat = donation?.ngo?.latitude || (currentLoc ? currentLoc.lat + 0.03 : 28.6439);
   const ngoLng = donation?.ngo?.longitude || (currentLoc ? currentLoc.lng + 0.03 : 77.2390);
