@@ -57,6 +57,8 @@ public class CommittedEndpointsAuthTest {
     private com.donateconnect.entity.Donation donationA;
     private com.donateconnect.entity.Delivery deliveryA;
 
+    private String realOtp;
+
     @BeforeEach
     void setup() {
         String uuid = java.util.UUID.randomUUID().toString();
@@ -88,12 +90,13 @@ public class CommittedEndpointsAuthTest {
                 .pickupLng(77.0)
                 .build());
 
+        realOtp = String.valueOf(100000 + new java.util.Random().nextInt(900000));
         deliveryA = deliveryRepository.save(com.donateconnect.entity.Delivery.builder()
                 .donation(donationA)
                 .volunteer(volunteerUser)
                 .status(com.donateconnect.entity.DeliveryStatus.PICKED_UP)
                 .assignedAt(java.time.LocalDateTime.now())
-                .deliveryOtp("123456")
+                .deliveryOtp(realOtp)
                 .build());
     }
 
@@ -125,9 +128,12 @@ public class CommittedEndpointsAuthTest {
                 .andExpect(status().isOk());
     }
 
+    @Autowired
+    private com.donateconnect.repository.CorporateDriveRepository corporateDriveRepository;
+
     @Test
     void testCorporateDrivesAuthorization() throws Exception {
-        String payload = "{\"companyName\":\"Corp\",\"campaignTitle\":\"Camp\",\"targetItemCount\":100}";
+        String payload = "{\"companyName\":\"Corp\",\"campaignTitle\":\"Camp\",\"targetItemCount\":100, \"corporateUser\": {\"id\": \"" + donorUser.getId() + "\"}, \"owner\": \"" + donorUser.getId() + "\"}";
         // Donor and NGO rejected
         mockMvc.perform(post("/api/corporate/drives").header("Authorization", "Bearer " + donorToken).contentType(MediaType.APPLICATION_JSON).content(payload))
                 .andExpect(status().isForbidden());
@@ -135,11 +141,15 @@ public class CommittedEndpointsAuthTest {
                 .andExpect(status().isForbidden());
                 
         // CORPORATE ok
-        mockMvc.perform(post("/api/corporate/drives").header("Authorization", "Bearer " + corporateToken).contentType(MediaType.APPLICATION_JSON).content(payload))
-                .andExpect(status().isOk());
+        String res = mockMvc.perform(post("/api/corporate/drives").header("Authorization", "Bearer " + corporateToken).contentType(MediaType.APPLICATION_JSON).content(payload))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
                 
         // body field cannot set owner - verify by checking created drive
-        // It's covered inherently because the controller ignores dto.corporateUser or dto.id
+        java.util.UUID driveId = java.util.UUID.fromString(new ObjectMapper().readTree(res).get("data").get("id").asText());
+        com.donateconnect.entity.CorporateDrive drive = corporateDriveRepository.findById(driveId).get();
+        org.junit.jupiter.api.Assertions.assertEquals(corporateUser.getId(), drive.getCorporateUser().getId());
+        org.junit.jupiter.api.Assertions.assertNotEquals(donorUser.getId(), drive.getCorporateUser().getId());
     }
 
     @Test
@@ -179,19 +189,22 @@ public class CommittedEndpointsAuthTest {
         // Owner donor accepted and NO OTP
         mockMvc.perform(get("/api/donations/" + donationA.getId()).header("Authorization", "Bearer " + donorToken))
                 .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("123456")))); // OTP not present
+                .andExpect(content().string(not(containsString(realOtp)))); // OTP not present
                 
-        // Owning NGO accepted
+        // Owning NGO accepted and NO OTP
         mockMvc.perform(get("/api/donations/" + donationA.getId()).header("Authorization", "Bearer " + ngoAToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(realOtp))));
                 
-        // Assigned courier accepted
+        // Assigned courier accepted and NO OTP
         mockMvc.perform(get("/api/donations/" + donationA.getId()).header("Authorization", "Bearer " + volunteerToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(realOtp))));
                 
-        // Admin accepted
+        // Admin accepted and NO OTP
         mockMvc.perform(get("/api/donations/" + donationA.getId()).header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(realOtp))));
     }
 
     @Test
@@ -219,5 +232,26 @@ public class CommittedEndpointsAuthTest {
         
         mockMvc.perform(get("/api/deliveries/donations/" + donationA.getId() + "/location").header("Authorization", "Bearer " + donorToken))
                 .andExpect(status().isBadRequest()); // In LocationRestController it returns BAD_REQUEST if delivered
+    }
+
+    @Autowired
+    private com.donateconnect.repository.SmartLockerRepository smartLockerRepository;
+
+    @Test
+    void testPublicLockersAuthorization() throws Exception {
+        String testPin = "SECRET123";
+        com.donateconnect.entity.SmartLocker locker = com.donateconnect.entity.SmartLocker.builder()
+                .name("Test Locker")
+                .address("Locker Addr")
+                .totalLockers(10)
+                .availableLockers(10)
+                .pinCode(testPin)
+                .build();
+        smartLockerRepository.save(locker);
+
+        mockMvc.perform(get("/api/lockers"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("pinCode"))))
+                .andExpect(content().string(not(containsString(testPin))));
     }
 }

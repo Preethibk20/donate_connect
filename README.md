@@ -108,8 +108,36 @@ docker run -p 8080:8080 \
   donateconnect-backend
 ```
 
----
+## 🚀 Deployment (Render + Vercel + Neon)
 
+### 1. Render (Backend)
+Deploy the backend Dockerfile as a **Web Service** on Render.
+* **Environment Variables (Render)**:
+  * `DB_URL`: `jdbc:postgresql://<neon-db-url>?sslmode=require`
+  * `DB_USERNAME` & `DB_PASSWORD`: Neon credentials
+  * `JWT_SECRET`: A secure 32+ character string
+  * `CORS_ALLOWED_ORIGINS`: Temporarily leave blank or set to `*`. We will update this after Vercel is deployed.
+  * `MAIL_PROVIDER`: `brevo`
+  * `BREVO_API_KEY`: Your Brevo API key
+  * `MAIL_FROM`: `noreply@yourdomain.com`
+  * `APP_SEED_ENABLED`: `true` (Only for the very first deployment to seed users, then set to `false`!)
+* **Disk Note**: Render's free tier disk is ephemeral. Uploaded photos (in `UPLOAD_DIR`) will disappear upon restart.
+* **Database Init**: New tables and columns are automatically created by Hibernate (`ddl-auto=update`) on first start.
+
+### 2. Vercel (Frontend)
+Deploy the `frontend/` directory to Vercel.
+* **Environment Variables (Vercel)**:
+  * `VITE_API_BASE_URL`: The URL of your Render backend (e.g., `https://your-backend.onrender.com/api`)
+  * Do NOT set `VITE_SHOW_PROTOTYPES` or `VITE_APP_DEMO_ENABLED` in production unless you want prototype features exposed.
+* **Framework Preset**: Vite
+* **Root Directory**: `frontend`
+
+### 3. Connect the Two (CORS)
+Once Vercel gives you your frontend URL (e.g., `https://your-frontend.vercel.app`), go back to the Render dashboard and set `CORS_ALLOWED_ORIGINS` to that exact URL. Redeploy the Render service.
+
+> **💡 Cold-Start Tip**: Free instances on Render spin down after 15 minutes of inactivity. The first API request may take 30-50 seconds to wake the server up.
+
+---
 
 ## 🔒 API & Endpoint Reference
 

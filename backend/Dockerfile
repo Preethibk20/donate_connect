@@ -1,14 +1,23 @@
-FROM eclipse-temurin:22-jdk-alpine as builder
+# Build stage
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
-RUN ./mvnw dependency:go-offline
-
-COPY src ./src
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+RUN ./mvnw dependency:go-offline -B
+COPY src src
 RUN ./mvnw package -DskipTests
 
-FROM eclipse-temurin:22-jre-alpine
+# Run stage
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
+COPY --from=build /app/target/*.jar app.jar
+
+ENV JAVA_TOOL_OPTIONS="-Xmx350m -XX:+UseSerialGC"
+ENV SERVER_PORT="${PORT:-8080}"
+
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
