@@ -121,6 +121,7 @@ Deploy the backend Dockerfile as a **Web Service** on Render.
   * `BREVO_API_KEY`: Your Brevo API key
   * `MAIL_FROM`: `noreply@yourdomain.com`
   * `APP_SEED_ENABLED`: `true` (Only for the very first deployment to seed users, then set to `false`!)
+  * `SEED_PASSWORD`: `YourSecurePassword!` (Required when seeding in production)
 * **Disk Note**: Render's free tier disk is ephemeral. Uploaded photos (in `UPLOAD_DIR`) will disappear upon restart.
 * **Database Init**: New tables and columns are automatically created by Hibernate (`ddl-auto=update`) on first start.
 

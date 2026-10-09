@@ -34,11 +34,22 @@ public class DataInitializer implements CommandLineRunner {
     private final DeliveryRepository deliveryRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @org.springframework.beans.factory.annotation.Value("${SEED_PASSWORD:}")
+    private String seedPassword;
+
+    @org.springframework.beans.factory.annotation.Value("${spring.profiles.active:}")
+    private String activeProfiles;
+
     @Override
     public void run(String... args) {
         if (userRepository.count() > 0) {
             log.info("Database already contains data. Skipping DataInitializer.");
             return;
+        }
+        
+        if (!activeProfiles.contains("local") && !activeProfiles.contains("e2e") && !activeProfiles.contains("test") 
+            && (seedPassword == null || seedPassword.isEmpty())) {
+            throw new IllegalStateException("SEED_PASSWORD must be set for non-local profiles when seeding is enabled");
         }
 
         log.info("Seeding Indian NGOs, Users, Volunteers, Corporate CSR, Lockers, Blockchain & Drives...");
@@ -46,7 +57,7 @@ public class DataInitializer implements CommandLineRunner {
         // 1. Create System Administrator
         User adminUser = User.builder()
                 .email("admin@donateconnect.in")
-                .passwordHash(passwordEncoder.encode("admin123"))
+                .passwordHash(passwordEncoder.encode(resolvePassword("admin123")))
                 .fullName("Aarav Sharma (System Admin)")
                 .role(Role.ADMIN)
                 .approved(true)
@@ -56,7 +67,7 @@ public class DataInitializer implements CommandLineRunner {
         // 2. Create Indian Volunteer Logistics Coordinator
         User volunteerUser = User.builder()
                 .email("dispatch@donateconnect.in")
-                .passwordHash(passwordEncoder.encode("driver123"))
+                .passwordHash(passwordEncoder.encode(resolvePassword("driver123")))
                 .fullName("Vikram Singh (Volunteer Logistics Coordinator)")
                 .role(Role.VOLUNTEER)
                 .approved(true)
@@ -66,7 +77,7 @@ public class DataInitializer implements CommandLineRunner {
         // 3. Create Indian Corporate CSR Account
         User corporateUser = User.builder()
                 .email("csr@tata.com")
-                .passwordHash(passwordEncoder.encode("corporate123"))
+                .passwordHash(passwordEncoder.encode(resolvePassword("corporate123")))
                 .fullName("Tata Consultancy Services (TCS CSR Wing)")
                 .role(Role.CORPORATE)
                 .approved(true)
@@ -76,7 +87,7 @@ public class DataInitializer implements CommandLineRunner {
         // 4. Create Indian Sample Donor Accounts
         User donorUser = User.builder()
                 .email("priya.patel@gmail.com")
-                .passwordHash(passwordEncoder.encode("donor123"))
+                .passwordHash(passwordEncoder.encode(resolvePassword("donor123")))
                 .fullName("Priya Patel")
                 .role(Role.DONOR)
                 .build();
@@ -84,7 +95,7 @@ public class DataInitializer implements CommandLineRunner {
 
         User donorUser2 = User.builder()
                 .email("rahul.verma@gmail.com")
-                .passwordHash(passwordEncoder.encode("donor123"))
+                .passwordHash(passwordEncoder.encode(resolvePassword("donor123")))
                 .fullName("Rahul Verma")
                 .role(Role.DONOR)
                 .build();
@@ -93,7 +104,7 @@ public class DataInitializer implements CommandLineRunner {
         // 5. Create Prominent Verified Indian NGO Partners
         NGOProfile goonjNgo = createNgo(
                 "contact@goonj.org",
-                "password123",
+                resolvePassword("password123"),
                 "Goonj Foundation",
                 "Turning urban surplus clothes, household goods, and sanitary items into a catalyst for rural development and disaster relief across 23 Indian states.",
                 "J-93, Sarita Vihar, Institutional Area, New Delhi - 110076",
@@ -103,7 +114,7 @@ public class DataInitializer implements CommandLineRunner {
 
         NGOProfile akshayaPatraNgo = createNgo(
                 "info@akshayapatra.org",
-                "password123",
+                resolvePassword("password123"),
                 "Akshaya Patra Foundation",
                 "Operating the world's largest mid-day meal program, serving wholesome hot cooked meals to over 2 million school children across India every day.",
                 "HK Hill, Chord Road, Rajajinagar, Bengaluru, Karnataka - 560010",
@@ -113,7 +124,7 @@ public class DataInitializer implements CommandLineRunner {
 
         NGOProfile prathamNgo = createNgo(
                 "connect@pratham.org",
-                "password123",
+                resolvePassword("password123"),
                 "Pratham Education Foundation",
                 "Innovative learning organization improving the quality of elementary education in India through community libraries and textbook drives.",
                 "Y.B. Chavan Centre, Gen. J. Bhosale Marg, Nariman Point, Mumbai, Maharashtra - 400021",
@@ -123,7 +134,7 @@ public class DataInitializer implements CommandLineRunner {
 
         NGOProfile helpAgeNgo = createNgo(
                 "hepline@helpageindia.org",
-                "password123",
+                resolvePassword("password123"),
                 "HelpAge India Relief Society",
                 "Advocating for disadvantaged elderly citizens, providing mobile healthcare vans, winter clothing, and emergency shelter care.",
                 "C-14, Qutab Institutional Area, New Delhi - 110016",
@@ -133,7 +144,7 @@ public class DataInitializer implements CommandLineRunner {
 
         NGOProfile smileNgo = createNgo(
                 "contact@smilefoundation.org",
-                "password123",
+                resolvePassword("password123"),
                 "Smile Toy & Child Care Trust",
                 "Empowering underprivileged children through education, pediatric nutrition, and collecting games and learning toys for shelter homes.",
                 "161 B/4, 3rd Floor, Gulmohar House, Yusuf Sarai, New Delhi - 110016",
@@ -276,6 +287,10 @@ public class DataInitializer implements CommandLineRunner {
                 .build());
 
         log.info("Successfully seeded Indian NGOs, Admin, Driver, Corporate CSR, Donors, Lockers, Blockchain, Trades & Drives!");
+    }
+
+    private String resolvePassword(String defaultPwd) {
+        return (seedPassword != null && !seedPassword.isEmpty()) ? seedPassword : defaultPwd;
     }
 
     private NGOProfile createNgo(String email, String password, String ngoName, String description, String address, String phone, boolean verified) {

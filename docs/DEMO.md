@@ -10,7 +10,7 @@ Run the local demo script:
 This script ensures ports are available, starts the Spring Boot backend using the `e2e` in-memory H2 database profile, and launches the Vite frontend.
 
 ## 2. Seeded Accounts
-The system is seeded with the following accounts (Password: `pass123`):
+The system is seeded with the following accounts. Locally, their default passwords are `admin123`, `driver123`, `corporate123`, `donor123`, and `password123`. When deploying to production with `APP_SEED_ENABLED=true`, you **MUST** set the `SEED_PASSWORD` environment variable, which will be used as the password for all seeded accounts.
 - **Donor:** priya.patel@gmail.com
 - **NGO Manager:** contact@goonj.org
 - **Volunteer (Courier):** vikram.s@gmail.com

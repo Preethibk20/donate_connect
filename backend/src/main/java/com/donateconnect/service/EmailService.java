@@ -22,7 +22,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final ObjectMapper objectMapper;
-    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+    private java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(5)).build();
 
     @Value("${app.mail.from:noreply@donateconnect.com}")
     private String fromEmail;
@@ -97,6 +97,7 @@ public class EmailService {
                 .header("api-key", brevoApiKey)
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
+                .timeout(java.time.Duration.ofSeconds(10))
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
                 
