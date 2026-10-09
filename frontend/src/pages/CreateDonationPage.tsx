@@ -4,9 +4,9 @@ import { useForm } from 'react-hook-form';
 import { createDonation, uploadDonationPhoto } from '../api/donationApi';
 import { getVerifiedNgos } from '../api/ngoApi';
 import { CreateDonationRequest, NGOProfile } from '../types';
-import { HeartHandshake, ArrowLeft, Send, Building2, UploadCloud, X, Loader2, MapPin } from 'lucide-react';
+import { HeartHandshake, ArrowLeft, Send, Building2, UploadCloud, X, Loader2, MapPin, Search } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -31,6 +31,12 @@ const getTodayInputValue = () => {
 interface UploadedPhoto {
   previewUrl: string; // local object URL for preview
   serverUrl: string;  // URL returned by backend storage endpoint
+}
+
+function ChangeView({ center }: { center: L.LatLngExpression }) {
+  const map = useMap();
+  map.setView(center, map.getZoom());
+  return null;
 }
 
 function LocationPicker({ position, setPosition }: { position: L.LatLngExpression | null, setPosition: (pos: L.LatLng) => void }) {
@@ -60,10 +66,14 @@ export const CreateDonationPage: React.FC = () => {
   const todayInputValue = getTodayInputValue();
   const [mapPosition, setMapPosition] = useState<L.LatLng | null>(null);
 
+  const [mapCenter, setMapCenter] = useState<L.LatLngExpression>([12.9716, 77.5946]);
+  const [geocoding, setGeocoding] = useState(false);
+
   const {
     register,
     handleSubmit,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<CreateDonationRequest>({
     defaultValues: {
@@ -146,6 +156,35 @@ export const CreateDonationPage: React.FC = () => {
       return prev.filter((_, i) => i !== index);
     });
     setPhotoError(null);
+  };
+
+  const handleFindOnMap = async () => {
+    const address = getValues('pickupAddress');
+    if (!address) {
+      showError('Please type an address first before finding on map.');
+      return;
+    }
+    
+    setGeocoding(true);
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        const newPos = new L.LatLng(lat, lon);
+        setMapCenter(newPos);
+        setMapPosition(newPos);
+        showSuccess('Location found! Pin updated on map.');
+      } else {
+        showError('Could not find that address on the map. Please move the pin manually.');
+      }
+    } catch (err) {
+      showError('Map search failed. Please tap the map manually to pin your location.');
+    } finally {
+      setGeocoding(false);
+    }
   };
 
   const onSubmit = async (data: CreateDonationRequest) => {
@@ -309,16 +348,29 @@ export const CreateDonationPage: React.FC = () => {
               <label htmlFor="pickup-address" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                 Pickup Address *
               </label>
-              <input
-                id="pickup-address"
-                type="text"
-                placeholder="Enter complete pickup address (e.g. 123 Main St, Apt 4B...)"
-                {...register('pickupAddress', { required: 'Pickup address is required' })}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
-              />
-              {errors.pickupAddress && (
-                <p className="text-rose-400 text-xs mt-1">{errors.pickupAddress.message}</p>
-              )}
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <input
+                    id="pickup-address"
+                    type="text"
+                    placeholder="Enter complete pickup address (e.g. 123 Main St, Apt 4B...)"
+                    {...register('pickupAddress', { required: 'Pickup address is required' })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  {errors.pickupAddress && (
+                    <p className="text-rose-400 text-xs mt-1">{errors.pickupAddress.message}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFindOnMap}
+                  disabled={geocoding}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {geocoding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  <span className="hidden sm:inline">Find on Map</span>
+                </button>
+              </div>
             </div>
 
             <div>
@@ -328,10 +380,11 @@ export const CreateDonationPage: React.FC = () => {
               </label>
               <div className="h-[250px] w-full rounded-2xl overflow-hidden border border-slate-800 relative z-0">
                 <MapContainer
-                  center={[12.9716, 77.5946]} // Default center (Bengaluru)
+                  center={mapCenter}
                   zoom={12}
                   style={{ height: '100%', width: '100%' }}
                 >
+                  <ChangeView center={mapCenter} />
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; OpenStreetMap contributors'
