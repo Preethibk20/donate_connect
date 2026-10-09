@@ -129,4 +129,4 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 
 ### E2E (Playwright)
 **Status:** 1 test passed (Chromium).
-- `Full flow: Donor -> NGO -> Courier -> Delivery -> OTP`: Verifies complete lifecycle using `e2e` isolated environment. Playwright asserts: donor creation, NGO accept, courier claim, marker moves, OTP, delivery, admin audit log.
+- `Full flow: Donor -> NGO -> Courier -> Delivery -> OTP`: Verifies complete lifecycle using `e2e` isolated environment. Playwright asserts: donor creation, NGO accept, courier claim, OTP, delivery.

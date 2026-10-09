@@ -27,8 +27,18 @@ public class NextGenController {
     private boolean sosModeActive;
 
     @GetMapping("/lockers")
-    public ResponseEntity<ApiResponse<List<SmartLocker>>> getSmartLockers() {
-        return ResponseEntity.ok(ApiResponse.success("Fetched 24/7 Smart Drop-off Locker Hubs", lockerRepository.findAll()));
+    public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getSmartLockers() {
+        List<java.util.Map<String, Object>> lockers = lockerRepository.findAll().stream().map(l -> {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", l.getId());
+            map.put("name", l.getName());
+            map.put("address", l.getAddress());
+            map.put("totalLockers", l.getTotalLockers());
+            map.put("availableLockers", l.getAvailableLockers());
+            map.put("createdAt", l.getCreatedAt());
+            return map;
+        }).collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("Fetched 24/7 Smart Drop-off Locker Hubs", lockers));
     }
 
     @GetMapping("/blockchain")
