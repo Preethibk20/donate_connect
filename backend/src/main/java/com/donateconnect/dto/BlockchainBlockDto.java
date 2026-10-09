@@ -12,10 +12,11 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NotificationDto {
+public class BlockchainBlockDto {
     private UUID id;
-    private String message;
-    private boolean read;
-    private UUID relatedDonationId;
-    private LocalDateTime createdAt;
+    private long blockIndex;
+    private String previousHash;
+    private String hash;
+    private String action; // PII (donationId) removed
+    private LocalDateTime timestamp;
 }

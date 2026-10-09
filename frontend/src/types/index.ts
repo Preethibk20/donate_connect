@@ -271,7 +271,10 @@ export interface BlockchainBlock {
 
 export interface NgoResourceTrade {
   id: string;
-  offeringNgo: NGOProfile;
+  ngoId: string;
+  ngoName: string;
+  ngoCity: string;
+  ngoVerified: boolean;
   offeredCategory: Category;
   offeredQuantity: number;
   requestedCategory: Category;

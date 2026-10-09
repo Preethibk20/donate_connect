@@ -1,5 +1,6 @@
 package com.donateconnect.dto;
 
+import com.donateconnect.entity.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,13 +13,18 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NGOProfileDto {
+public class NgoUrgentNeedPublicDto {
     private UUID id;
-    private UserResponseDto user;
-    private String name;
+    private String title;
     private String description;
-    private String address;
-    private String phone;
-    private boolean verified;
+    private Category category;
+    private Integer quantity;
+    private boolean active;
     private LocalDateTime createdAt;
+    
+    // Scrubbed NGO Profile
+    private UUID ngoId;
+    private String ngoName;
+    private String ngoCity;
+    private boolean ngoVerified;
 }

@@ -74,7 +74,6 @@ public class DonationController {
         com.donateconnect.entity.User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Authenticated user profile not found"));
         DonationResponseDto donation = donationService.getDonationById(id, user);
-        // Scrub the OTP before sending to frontend! No OTP anywhere in response body.
         return ResponseEntity.ok(ApiResponse.success("Fetched donation detail", donation));
     }
 

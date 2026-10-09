@@ -54,7 +54,7 @@ export const CircularMarketplacePage: React.FC = () => {
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <span className="text-xs font-bold text-white flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-indigo-400" />
-                  {t.offeringNgo.name}
+                  {t.ngoName}
                 </span>
                 <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                   Active Trade Offer
@@ -72,12 +72,14 @@ export const CircularMarketplacePage: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() => alert(`Initiated trade request with ${t.offeringNgo.name}!`)}
-                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2"
-              >
-                <Repeat className="w-4 h-4" /> Propose Resource Exchange &rarr;
-              </button>
+              {import.meta.env.VITE_SHOW_PROTOTYPES === 'true' && (
+                <button
+                  onClick={() => alert(`Initiated trade request with ${t.ngoName}!`)}
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2"
+                >
+                  <Repeat className="w-4 h-4" /> Propose Resource Exchange &rarr;
+                </button>
+              )}
             </div>
           ))}
         </div>

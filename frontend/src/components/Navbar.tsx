@@ -79,21 +79,21 @@ export const Navbar: React.FC = () => {
                 <MapPin className="w-3.5 h-3.5" /> Map
               </Link>
 
-              <Link to="/lockers" className={navLinkClass('/lockers')}>
-                <Lock className="w-3.5 h-3.5" /> Lockers
-              </Link>
-
-              <Link to="/impact" className={navLinkClass('/impact')}>
-                <BarChart3 className="w-3.5 h-3.5" /> Impact
-              </Link>
-
-              <Link to="/blockchain-ledger" className={navLinkClass('/blockchain-ledger')}>
-                <Cpu className="w-3.5 h-3.5" /> Blockchain
-              </Link>
-
-              <Link to="/circular-market" className={navLinkClass('/circular-market')}>
-                <Recycle className="w-3.5 h-3.5" /> Circular
-              </Link>
+              {import.meta.env.VITE_SHOW_PROTOTYPES === 'true' && (
+                <>
+                  <Link to="/lockers" className={navLinkClass('/lockers')}>
+                    <Lock className="w-3.5 h-3.5" /> Lockers
+                  </Link>
+    
+                  <Link to="/blockchain-ledger" className={navLinkClass('/blockchain-ledger')}>
+                    <Cpu className="w-3.5 h-3.5" /> Blockchain
+                  </Link>
+    
+                  <Link to="/circular-market" className={navLinkClass('/circular-market')}>
+                    <Recycle className="w-3.5 h-3.5" /> Circular
+                  </Link>
+                </>
+              )}
 
               {isVolunteer && (
                 <Link to="/driver-dashboard" className={navLinkClass('/driver-dashboard')}>

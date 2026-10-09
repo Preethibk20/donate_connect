@@ -97,8 +97,15 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 
 ## 5. Actual Test Coverage & Results
 
+### Honest Limitations & Untested Boundaries
+- **Donor Cancellation:** NOT IMPLEMENTED.
+- **Location Tracking:** GPS-permission-denied and tab-closed-mid-tracking NOT TESTED.
+- **Database:** Concurrency tests run on H2 only (never PostgreSQL).
+- **Email Delivery:** Real email delivery NOT TESTED (mail is mocked).
+- **NextGen Features:** NextGen features live on branch `nextgen-wip` and are untested.
+
 ### Backend (JUnit 5 / Spring Boot Test)
-**Status:** All passed (100% success on isolated H2).
+**Status:** All passed, 1 test skipped on isolated H2.
 - `ConcurrencyIntegrationTest`: Verifies 409 Conflict handling when multiple couriers claim a delivery.
 - `DeliveryOtpIntegrationTest`: Verifies secure OTP verification and delivery finalization.
 - `IntegrationWorkflowTest`: End-to-end integration of Donation creation to Delivery.
@@ -108,6 +115,7 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 - `GlobalExceptionHandlerIntegrationTest`: Checks generic and specific error wrapping.
 - `AuthRateLimitTest`, `IpRateLimitTrustedIntegrationTest`, `IpRateLimitUntrustedIntegrationTest`: Validates IP limiting logic.
 - `WebSocketAuthTest`: Verifies JWT handshake for STOMP.
+- `CommittedEndpointsAuthTest`: MockMvc tests confirming proper access controls for Urgent Needs, CSR Drives, and Profiles.
 
 ### Frontend (Vitest & React Testing Library)
 **Status:** 23 tests passed across 6 files.
@@ -117,7 +125,8 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 - `OtpInput.test.tsx`: Component functionality.
 - `CreateDonationPage.test.tsx`: Validates description length, photo requirements, map pins, and required fields.
 - `TrackDeliveryPage.test.tsx`: Simulates offline state, polling fallback on WebSocket drop, and "Mark Delivered" modal submission.
+- `Navbar.test.tsx`: Confirms `VITE_SHOW_PROTOTYPES` conditional rendering.
 
 ### E2E (Playwright)
 **Status:** 1 test passed (Chromium).
-- `Full flow: Donor -> NGO -> Courier -> Delivery -> OTP`: Verifies complete lifecycle using `e2e` isolated environment.
+- `Full flow: Donor -> NGO -> Courier -> Delivery -> OTP`: Verifies complete lifecycle using `e2e` isolated environment. Playwright asserts: donor creation, NGO accept, courier claim, marker moves, OTP, delivery, admin audit log.

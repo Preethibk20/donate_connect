@@ -19,8 +19,22 @@ public class PublicUrgentNeedController {
     private final NgoUrgentNeedService urgentNeedService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<NgoUrgentNeedDto>>> getActiveUrgentNeeds() {
-        List<NgoUrgentNeedDto> needs = urgentNeedService.getActiveUrgentNeeds();
+    public ResponseEntity<ApiResponse<List<com.donateconnect.dto.NgoUrgentNeedPublicDto>>> getActiveUrgentNeeds() {
+        List<com.donateconnect.dto.NgoUrgentNeedPublicDto> needs = urgentNeedService.getActiveUrgentNeeds().stream()
+            .map(dto -> com.donateconnect.dto.NgoUrgentNeedPublicDto.builder()
+                .id(dto.getId())
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .category(dto.getCategory())
+                .quantity(dto.getQuantity())
+                .active(dto.isActive())
+                .createdAt(dto.getCreatedAt())
+                .ngoId(dto.getNgo().getId())
+                .ngoName(dto.getNgo().getName())
+                .ngoCity(dto.getNgo().getCity())
+                .ngoVerified(dto.getNgo().isVerified())
+                .build())
+            .toList();
         return ResponseEntity.ok(ApiResponse.success("Fetched active urgent donation campaigns", needs));
     }
 }

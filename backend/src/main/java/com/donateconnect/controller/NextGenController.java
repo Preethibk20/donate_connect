@@ -23,7 +23,8 @@ public class NextGenController {
     private final BlockchainBlockRepository blockchainRepository;
     private final NgoResourceTradeRepository tradeRepository;
 
-    private static boolean sosModeActive = true; // Seeded as active for disaster relief demonstration
+    @org.springframework.beans.factory.annotation.Value("${app.sos.active:false}")
+    private boolean sosModeActive;
 
     @GetMapping("/lockers")
     public ResponseEntity<ApiResponse<List<SmartLocker>>> getSmartLockers() {
@@ -31,13 +32,38 @@ public class NextGenController {
     }
 
     @GetMapping("/blockchain")
-    public ResponseEntity<ApiResponse<List<BlockchainBlock>>> getBlockchainLedger() {
-        return ResponseEntity.ok(ApiResponse.success("Fetched Immutable Blockchain Donation Audit Blocks", blockchainRepository.findAllByOrderByBlockIndexAsc()));
+    public ResponseEntity<ApiResponse<List<com.donateconnect.dto.BlockchainBlockDto>>> getBlockchainLedger() {
+        List<com.donateconnect.dto.BlockchainBlockDto> dtos = blockchainRepository.findAllByOrderByBlockIndexAsc().stream()
+            .map(b -> com.donateconnect.dto.BlockchainBlockDto.builder()
+                .id(b.getId())
+                .blockIndex(b.getBlockIndex())
+                .previousHash(b.getPreviousHash())
+                .hash(b.getHash())
+                .action(b.getAction())
+                .timestamp(b.getTimestamp())
+                .build())
+            .toList();
+        return ResponseEntity.ok(ApiResponse.success("Fetched Immutable Blockchain Donation Audit Blocks", dtos));
     }
 
     @GetMapping("/trades")
-    public ResponseEntity<ApiResponse<List<NgoResourceTrade>>> getActiveTrades() {
-        return ResponseEntity.ok(ApiResponse.success("Fetched Inter-NGO Surplus Resource Trades", tradeRepository.findByActiveTrueOrderByCreatedAtDesc()));
+    public ResponseEntity<ApiResponse<List<com.donateconnect.dto.NgoResourceTradePublicDto>>> getActiveTrades() {
+        List<com.donateconnect.dto.NgoResourceTradePublicDto> dtos = tradeRepository.findByActiveTrueOrderByCreatedAtDesc().stream()
+            .map(t -> com.donateconnect.dto.NgoResourceTradePublicDto.builder()
+                .id(t.getId())
+                .ngoId(t.getOfferingNgo().getId())
+                .ngoName(t.getOfferingNgo().getName())
+                .ngoCity(t.getOfferingNgo().getCity())
+                .ngoVerified(t.getOfferingNgo().isVerified())
+                .offeredCategory(t.getOfferedCategory())
+                .offeredQuantity(t.getOfferedQuantity())
+                .requestedCategory(t.getRequestedCategory())
+                .requestedQuantity(t.getRequestedQuantity())
+                .active(t.isActive())
+                .createdAt(t.getCreatedAt())
+                .build())
+            .toList();
+        return ResponseEntity.ok(ApiResponse.success("Fetched Inter-NGO Surplus Resource Trades", dtos));
     }
 
     @GetMapping("/sos")

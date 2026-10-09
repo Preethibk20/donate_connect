@@ -47,9 +47,13 @@ const AppShell: React.FC = () => {
               <Route path="/ngos/:id" element={<NgoDetailPage />} />
               <Route path="/impact" element={<ImpactPage />} />
               <Route path="/map" element={<MapViewPage />} />
-              <Route path="/lockers" element={<SmartLockersPage />} />
-              <Route path="/blockchain-ledger" element={<BlockchainLedgerPage />} />
-              <Route path="/circular-market" element={<CircularMarketplacePage />} />
+              {import.meta.env.VITE_SHOW_PROTOTYPES === 'true' && (
+                <>
+                  <Route path="/lockers" element={<SmartLockersPage />} />
+                  <Route path="/blockchain-ledger" element={<BlockchainLedgerPage />} />
+                  <Route path="/circular-market" element={<CircularMarketplacePage />} />
+                </>
+              )}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/unauthorized" element={<UnauthorizedPage />} />
