@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(properties = "app.seed.enabled=true")
+@TestPropertySource(properties = {"app.seed.enabled=true", "SEED_PASSWORD=test123"})
 public class DataInitializerSeedTest {
 
     @Autowired(required = false)
@@ -72,7 +72,7 @@ class DataInitializerPropertyUnsetTest {
 
     @Test
     void testDataInitializerIsPresentWhenPropertyIsTrue() {
-        contextRunner.withPropertyValues("app.seed.enabled=true").run(context -> {
+        contextRunner.withPropertyValues("app.seed.enabled=true", "SEED_PASSWORD=test123").run(context -> {
             assertThat(context).hasSingleBean(DataInitializer.class);
         });
     }
