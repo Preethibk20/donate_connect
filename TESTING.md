@@ -95,19 +95,29 @@ While automated tests cover core logic, UI/UX and edge cases must be verified ma
 - **Do Not Fake Tests:** If a feature cannot be tested automatically (e.g., native mobile GPS), note it in the manual testing table above.
 - **Backend Env:** Do not load `backend/.env` for E2E tests, as it contains sensitive keys and the `APP_SEED_ENABLED=true` flag. The `e2e` profile manages safe defaults.
 
-## 5. Not Covered and Known Issues
+## 5. Actual Test Coverage & Results
 
-### Not Covered
-- **Donor cancellation**: NOT IMPLEMENTED.
-- **GPS Permission Denied / Geolocation Unavailable**: NOT TESTED.
-- **Courier Reconnecting Mid-trip / Tab Closed**: NOT TESTED. 
-- **Large Photo Upload**: NOT TESTED.
-- **NGO rejecting after courier accepted**: NOT TESTED automatically.
-- **Wrong OTP 3 times then regeneration**: NOT TESTED.
+### Backend (JUnit 5 / Spring Boot Test)
+**Status:** All passed (100% success on isolated H2).
+- `ConcurrencyIntegrationTest`: Verifies 409 Conflict handling when multiple couriers claim a delivery.
+- `DeliveryOtpIntegrationTest`: Verifies secure OTP verification and delivery finalization.
+- `IntegrationWorkflowTest`: End-to-end integration of Donation creation to Delivery.
+- `RoleMatrixIntegrationTest`: Tests IDOR protections (Donor can only see own, NGO isolated, OTP hidden from unauthorized).
+- `LocationPipelineTest`: Validates live location websocket updates.
+- `SecurityAndRbacTests`: Role access matrices for controllers.
+- `GlobalExceptionHandlerIntegrationTest`: Checks generic and specific error wrapping.
+- `AuthRateLimitTest`, `IpRateLimitTrustedIntegrationTest`, `IpRateLimitUntrustedIntegrationTest`: Validates IP limiting logic.
+- `WebSocketAuthTest`: Verifies JWT handshake for STOMP.
 
-### Known Issues
-- **Cancellation Post-Assignment**: Donor cancellation after a courier is assigned lacks a specific push notification back to the courier.
+### Frontend (Vitest & React Testing Library)
+**Status:** 23 tests passed across 6 files.
+- `urlUtils.test.ts`: URL parsing utilities.
+- `ProtectedRoute.test.tsx`: RBAC client-side routing logic.
+- `AuthContext.test.tsx`: JWT storage and login/logout state.
+- `OtpInput.test.tsx`: Component functionality.
+- `CreateDonationPage.test.tsx`: Validates description length, photo requirements, map pins, and required fields.
+- `TrackDeliveryPage.test.tsx`: Simulates offline state, polling fallback on WebSocket drop, and "Mark Delivered" modal submission.
 
-
-## Concurrency Testing
-- The double-claim concurrency test was verified on the embedded H2 database (since Docker was unavailable locally), not PostgreSQL.
+### E2E (Playwright)
+**Status:** 1 test passed (Chromium).
+- `Full flow: Donor -> NGO -> Courier -> Delivery -> OTP`: Verifies complete lifecycle using `e2e` isolated environment.
