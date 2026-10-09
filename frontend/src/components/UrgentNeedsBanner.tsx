@@ -48,7 +48,7 @@ export const UrgentNeedsBanner: React.FC = () => {
                     {need.category}
                   </span>
                   <span className="text-xs text-slate-400 font-medium truncate">
-                    {need.ngo.name}
+                    {need.ngoName || 'NGO Partner'}
                   </span>
                 </div>
                 <h4 className="text-sm font-semibold text-white mb-1 line-clamp-1">{need.title}</h4>
@@ -56,9 +56,9 @@ export const UrgentNeedsBanner: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                <span className="text-[11px] text-slate-400">📍 {need.ngo.address}</span>
+                <span className="text-[11px] text-slate-400">📍 {need.ngoCity || 'Verified NGO'}</span>
                 <Link
-                  to={`/donate/new?ngoId=${need.ngo.id}&category=${need.category}`}
+                  to={`/donate/new?ngoId=${need.ngoId}&category=${need.category}`}
                   className="inline-flex items-center gap-1 text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg border border-rose-500/30 transition-all"
                 >
                   Donate Now &rarr;
