@@ -63,7 +63,7 @@ public class NGOServiceImpl implements NGOService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<NGOProfileDto> getAllVerifiedNgos(String category, String city, Boolean needsRightNow, Double donorLat, Double donorLng) {
         List<NGOProfile> profiles = ngoProfileRepository.findByVerifiedTrue();
 
@@ -124,14 +124,14 @@ public class NGOServiceImpl implements NGOService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public org.springframework.data.domain.Page<NGOProfileDto> getAllNgosForAdmin(org.springframework.data.domain.Pageable pageable) {
         return ngoProfileRepository.findAll(pageable)
                 .map(this::mapToDto);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public NGOProfileDto getNgoById(UUID id) {
         NGOProfile profile = ngoProfileRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("NGO profile not found with id: " + id));
@@ -159,7 +159,7 @@ public class NGOServiceImpl implements NGOService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public NGOProfileDto getNgoProfileByUserId(UUID userId) {
         NGOProfile profile = ngoProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("NGO profile not found for user id: " + userId));
