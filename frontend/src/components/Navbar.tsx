@@ -119,7 +119,6 @@ export const Navbar: React.FC = () => {
               </button>
 
               {isAuthenticated && <NotificationBell />}
-              <HealthBadge />
 
               {/* Divider */}
               <div className="w-px h-5 bg-[#E5E7EB] shrink-0" />
