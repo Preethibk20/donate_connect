@@ -58,7 +58,7 @@ public class DataInitializer implements CommandLineRunner {
         User adminUser = User.builder()
                 .email("admin@donateconnect.in")
                 .passwordHash(passwordEncoder.encode(resolvePassword("admin123")))
-                .fullName("Aarav Sharma (System Admin)")
+                .fullName("Donate Connect")
                 .role(Role.ADMIN)
                 .approved(true)
                 .build();
