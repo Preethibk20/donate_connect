@@ -58,6 +58,9 @@ export const CreateDonationPage: React.FC = () => {
 
   const [ngos, setNgos] = useState<NGOProfile[]>([]);
   const [loadingNgos, setLoadingNgos] = useState(true);
+  
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [hasPromptedLocation, setHasPromptedLocation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
@@ -474,6 +477,12 @@ export const CreateDonationPage: React.FC = () => {
                           setIsTyping(true);
                           onChange(e);
                         },
+                        onFocus: () => {
+                          if (!hasPromptedLocation && !getValues('pickupAddress')) {
+                            setHasPromptedLocation(true);
+                            setShowLocationPrompt(true);
+                          }
+                        },
                         onBlur: (e: any) => {
                           setTimeout(() => setShowSuggestions(false), 200);
                           onBlur(e);
@@ -482,6 +491,36 @@ export const CreateDonationPage: React.FC = () => {
                     })()}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
                   />
+                  
+                  {/* Location Prompt Popup */}
+                  {showLocationPrompt && (
+                    <div className="absolute bottom-full mb-3 left-0 right-0 bg-slate-900 border border-indigo-500/50 p-4 rounded-xl shadow-2xl z-[1200] flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2">
+                      <p className="text-sm text-slate-200 font-medium flex items-start gap-2">
+                        <Navigation className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
+                        Would you like to use your current GPS location for the pickup address?
+                      </p>
+                      <div className="flex gap-2 justify-end">
+                        <button 
+                          type="button" 
+                          onClick={() => setShowLocationPrompt(false)} 
+                          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-white transition-colors"
+                        >
+                          No, I'll type it
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => { 
+                            setShowLocationPrompt(false); 
+                            handleUseCurrentLocation(); 
+                          }} 
+                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold text-white transition-colors"
+                        >
+                          Yes, use GPS
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {showSuggestions && suggestions.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[1100] max-h-60 overflow-y-auto">
                       {suggestions.map((s, idx) => (
