@@ -436,12 +436,15 @@ export const CreateDonationPage: React.FC = () => {
                       {suggestions.map((s, idx) => (
                         <div
                           key={idx}
-                          onClick={() => handleSuggestionClick(s)}
-                          className="px-4 py-3 hover:bg-slate-800 cursor-pointer border-b border-slate-800/50 last:border-0"
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevent input blur before click registers
+                            handleSuggestionClick(s);
+                          }}
+                          className="px-4 py-3 hover:bg-[#7567E8] group cursor-pointer border-b border-slate-800/50 last:border-0 transition-colors"
                         >
                           <div className="flex items-start gap-3">
-                            <MapPin className="w-4 h-4 mt-0.5 text-indigo-400 shrink-0" />
-                            <span className="text-sm text-slate-200">{s.display_name}</span>
+                            <MapPin className="w-4 h-4 mt-0.5 text-indigo-400 group-hover:text-white shrink-0 transition-colors" />
+                            <span className="text-sm text-slate-200 group-hover:text-white transition-colors">{s.display_name}</span>
                           </div>
                         </div>
                       ))}
