@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { createDonation, uploadDonationPhoto } from '../api/donationApi';
 import { getVerifiedNgos } from '../api/ngoApi';
 import { CreateDonationRequest, NGOProfile } from '../types';
-import { HeartHandshake, ArrowLeft, Send, Building2, UploadCloud, X, Loader2, MapPin, Search } from 'lucide-react';
+import { HeartHandshake, ArrowLeft, Send, Building2, UploadCloud, X, Loader2, MapPin, Search, Navigation } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -123,7 +123,7 @@ export const CreateDonationPage: React.FC = () => {
         }
         const viewbox = `${cLng - 0.5},${cLat + 0.5},${cLng + 0.5},${cLat - 0.5}`;
         
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressValue)}&limit=5&countrycodes=in&viewbox=${viewbox}&bounded=1`);
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressValue)}&limit=5&countrycodes=in&viewbox=${viewbox}&bounded=1&accept-language=en`);
         const data = await response.json();
         if (data && data.length > 0) {
           setSuggestions(data);
@@ -227,7 +227,7 @@ export const CreateDonationPage: React.FC = () => {
     
     setGeocoding(true);
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&accept-language=en`);
       const data = await response.json();
       
       if (data && data.length > 0) {
@@ -245,6 +245,40 @@ export const CreateDonationPage: React.FC = () => {
     } finally {
       setGeocoding(false);
     }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      showError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setGeocoding(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const newPos = new L.LatLng(lat, lon);
+        setMapCenter(newPos);
+        setMapPosition(newPos);
+        
+        try {
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=en`);
+          const data = await response.json();
+          if (data && data.display_name) {
+            setValue('pickupAddress', data.display_name, { shouldValidate: true });
+          }
+          showSuccess('Current location pinned!');
+        } catch (err) {
+          showSuccess('Pinned location on map, but could not fetch address name.');
+        } finally {
+          setGeocoding(false);
+        }
+      },
+      (error) => {
+        setGeocoding(false);
+        showError('Unable to retrieve your location. Please check your browser permissions.');
+      }
+    );
   };
 
   const onSubmit = async (data: CreateDonationRequest) => {
@@ -454,15 +488,26 @@ export const CreateDonationPage: React.FC = () => {
                     <p className="text-rose-400 text-xs mt-1">{errors.pickupAddress.message}</p>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleFindOnMap}
-                  disabled={geocoding}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 disabled:opacity-50"
-                >
-                  {geocoding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                  <span className="hidden sm:inline">Find on Map</span>
-                </button>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={geocoding}
+                    title="Use Current Location"
+                    className="p-2.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    {geocoding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Navigation className="w-5 h-5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleFindOnMap}
+                    disabled={geocoding}
+                    title="Find Typed Address on Map"
+                    className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    {geocoding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
             </div>
 
