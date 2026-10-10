@@ -279,8 +279,10 @@ export const CreateDonationPage: React.FC = () => {
       },
       (error) => {
         setGeocoding(false);
-        showError('Unable to retrieve your location. Please check your browser permissions.');
-      }
+        console.error("Geolocation error:", error);
+        showError(`Unable to retrieve location: ${error.message}`);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 
