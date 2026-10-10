@@ -3,7 +3,8 @@ import { ApiResponse, CreateDonationRequest, Donation, DonationComment, Donation
 
 export const getHealthStatus = async (): Promise<HealthStatus> => {
   try {
-    const response = await apiClient.get<HealthStatus>('/health');
+    // Adding a 5000ms (5 second) timeout so it doesn't stay stuck on "Checking..."
+    const response = await apiClient.get<HealthStatus>('/health', { timeout: 5000 });
     if (typeof response.data === 'object' && response.data !== null && 'status' in response.data) {
       return response.data;
     }
