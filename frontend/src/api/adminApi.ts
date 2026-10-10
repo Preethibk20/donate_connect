@@ -12,8 +12,9 @@ export const getAllNgosAdmin = async (): Promise<NGOProfile[]> => {
 };
 
 export const getPendingUsers = async (): Promise<User[]> => {
-  const response = await apiClient.get<ApiResponse<User[]>>('/admin/users/pending');
-  return response.data.data;
+  const response = await apiClient.get<ApiResponse<any>>('/admin/users/pending');
+  // Backend returns a Page object, so we extract the 'content' array
+  return response.data.data.content || [];
 };
 
 export const approveUser = async (id: string): Promise<User> => {
