@@ -112,7 +112,18 @@ export const CreateDonationPage: React.FC = () => {
 
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressValue)}&limit=5&countrycodes=in`);
+        let cLat = 12.9716;
+        let cLng = 77.5946;
+        if (Array.isArray(mapCenter)) {
+          cLat = mapCenter[0] as number;
+          cLng = mapCenter[1] as number;
+        } else if ((mapCenter as any).lat) {
+          cLat = (mapCenter as any).lat;
+          cLng = (mapCenter as any).lng;
+        }
+        const viewbox = `${cLng - 0.5},${cLat + 0.5},${cLng + 0.5},${cLat - 0.5}`;
+        
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressValue)}&limit=5&countrycodes=in&viewbox=${viewbox}&bounded=1`);
         const data = await response.json();
         if (data && data.length > 0) {
           setSuggestions(data);
