@@ -68,12 +68,17 @@ export const CreateDonationPage: React.FC = () => {
 
   const [mapCenter, setMapCenter] = useState<L.LatLngExpression>([12.9716, 77.5946]);
   const [geocoding, setGeocoding] = useState(false);
+  
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
     getValues,
+    watch,
     formState: { errors },
   } = useForm<CreateDonationRequest>({
     defaultValues: {
@@ -93,6 +98,50 @@ export const CreateDonationPage: React.FC = () => {
       .catch(() => setNgos([]))
       .finally(() => setLoadingNgos(false));
   }, [preselectedNgoId, setValue]);
+
+  const addressValue = watch('pickupAddress');
+
+  useEffect(() => {
+    if (!addressValue || addressValue.length < 4) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    if (!isTyping) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressValue)}&limit=5&countrycodes=in`);
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setSuggestions(data);
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } catch (err) {
+        console.error('Failed to fetch suggestions');
+      }
+    }, 1000); // 1s debounce to respect Nominatim limits
+
+    return () => clearTimeout(timer);
+  }, [addressValue, isTyping]);
+
+  const handleSuggestionClick = (suggestion: any) => {
+    setIsTyping(false);
+    setValue('pickupAddress', suggestion.display_name, { shouldValidate: true });
+    
+    const lat = parseFloat(suggestion.lat);
+    const lon = parseFloat(suggestion.lon);
+    const newPos = new L.LatLng(lat, lon);
+    
+    setMapCenter(newPos);
+    setMapPosition(newPos);
+    setShowSuggestions(false);
+    showSuccess('Location pinned!');
+  };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -348,15 +397,39 @@ export const CreateDonationPage: React.FC = () => {
               <label htmlFor="pickup-address" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                 Pickup Address *
               </label>
-              <div className="flex gap-3">
+              <div className="flex gap-3 relative">
                 <div className="flex-1">
                   <input
                     id="pickup-address"
                     type="text"
                     placeholder="Enter complete pickup address (e.g. 123 Main St, Apt 4B...)"
                     {...register('pickupAddress', { required: 'Pickup address is required' })}
+                    onChange={(e) => {
+                      setIsTyping(true);
+                      setValue('pickupAddress', e.target.value, { shouldValidate: true });
+                    }}
+                    onBlur={() => {
+                      // Slight delay to allow click event on suggestion to fire
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
                   />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[1100] max-h-60 overflow-y-auto">
+                      {suggestions.map((s, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => handleSuggestionClick(s)}
+                          className="px-4 py-3 hover:bg-slate-800 cursor-pointer border-b border-slate-800/50 last:border-0"
+                        >
+                          <div className="flex items-start gap-3">
+                            <MapPin className="w-4 h-4 mt-0.5 text-indigo-400 shrink-0" />
+                            <span className="text-sm text-slate-200">{s.display_name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {errors.pickupAddress && (
                     <p className="text-rose-400 text-xs mt-1">{errors.pickupAddress.message}</p>
                   )}
