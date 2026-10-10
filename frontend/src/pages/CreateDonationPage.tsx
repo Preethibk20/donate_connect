@@ -403,11 +403,21 @@ export const CreateDonationPage: React.FC = () => {
                     id="pickup-address"
                     type="text"
                     placeholder="Enter complete pickup address (e.g. 123 Main St, Apt 4B...)"
-                    {...register('pickupAddress', { 
-                      required: 'Pickup address is required',
-                      onChange: (e) => setIsTyping(true),
-                      onBlur: (e) => setTimeout(() => setShowSuggestions(false), 200)
-                    })}
+                    {...(() => {
+                      const { onChange, onBlur, name, ref } = register('pickupAddress', { required: 'Pickup address is required' });
+                      return {
+                        name,
+                        ref,
+                        onChange: (e: any) => {
+                          setIsTyping(true);
+                          onChange(e);
+                        },
+                        onBlur: (e: any) => {
+                          setTimeout(() => setShowSuggestions(false), 200);
+                          onBlur(e);
+                        }
+                      };
+                    })()}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
                   />
                   {showSuggestions && suggestions.length > 0 && (
