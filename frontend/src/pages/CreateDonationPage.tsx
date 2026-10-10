@@ -39,10 +39,10 @@ function ChangeView({ center }: { center: L.LatLngExpression }) {
   return null;
 }
 
-function LocationPicker({ position, setPosition }: { position: L.LatLngExpression | null, setPosition: (pos: L.LatLng) => void }) {
+function LocationPicker({ position, onLocationSelect }: { position: L.LatLngExpression | null, onLocationSelect: (pos: L.LatLng) => void }) {
   useMapEvents({
     click(e) {
-      setPosition(e.latlng);
+      onLocationSelect(e.latlng);
     },
   });
   return position === null ? null : (
@@ -279,6 +279,23 @@ export const CreateDonationPage: React.FC = () => {
         showError('Unable to retrieve your location. Please check your browser permissions.');
       }
     );
+  };
+
+  const handleMapClick = async (pos: L.LatLng) => {
+    setMapPosition(pos);
+    setGeocoding(true);
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}&accept-language=en`);
+      const data = await response.json();
+      if (data && data.display_name) {
+        setValue('pickupAddress', data.display_name, { shouldValidate: true });
+        showSuccess('Address updated from map pin!');
+      }
+    } catch (err) {
+      console.error('Failed to reverse geocode clicked location');
+    } finally {
+      setGeocoding(false);
+    }
   };
 
   const onSubmit = async (data: CreateDonationRequest) => {
@@ -527,7 +544,7 @@ export const CreateDonationPage: React.FC = () => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; OpenStreetMap contributors'
                   />
-                  <LocationPicker position={mapPosition} setPosition={setMapPosition} />
+                  <LocationPicker position={mapPosition} onLocationSelect={handleMapClick} />
                 </MapContainer>
                 {!mapPosition && (
                   <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center pointer-events-none z-[1000]">
