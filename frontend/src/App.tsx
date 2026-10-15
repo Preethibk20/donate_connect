@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -101,6 +102,7 @@ const AppShell: React.FC = () => {
             </Routes>
           </main>
           <Footer />
+          <Analytics />
         </div>
       </Router>
     </AuthProvider>
