@@ -83,7 +83,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/health", "/api/dev-approve-all", "/api/debug-smtp").permitAll()
+                .requestMatchers("/api/health", "/api/ping", "/api/dev-approve-all", "/api/debug-smtp").permitAll()
                 .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/verify-otp", "/api/auth/resend-otp").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/ngo", "/api/ngo/*", "/api/ngo/*/ratings").permitAll()
