@@ -24,13 +24,6 @@ export const HomePage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    getVerifiedNgos()
-      .then((data: NGOProfile[]) => setNgos(data.slice(0, 3)))
-      .catch(() => setNgos([]))
-      .finally(() => setLoading(false));
-  }, []);
-
   return (
     <div className="space-y-12 py-8">
       {/* Urgent Appeal Campaigns Banner */}

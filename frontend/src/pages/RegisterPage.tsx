@@ -24,6 +24,12 @@ export const RegisterPage: React.FC = () => {
     formState: { errors },
   } = useForm<RegisterRequest>();
 
+  const getDestinationPath = (role: 'DONOR' | 'VOLUNTEER' | 'NGO') => {
+    if (role === 'NGO') return '/ngo-dashboard';
+    if (role === 'VOLUNTEER') return '/driver-dashboard';
+    return '/donations';
+  };
+
   const onSubmit = async (data: RegisterRequest) => {
     setLoading(true);
     setError(null);
@@ -33,7 +39,7 @@ export const RegisterPage: React.FC = () => {
         setShowOtp(true);
         setRegisterEmail(data.email);
       } else {
-        navigate(selectedRole === 'DONOR' ? '/donations' : '/driver-dashboard');
+        navigate(getDestinationPath(selectedRole));
       }
     } catch (err: any) {
       setError(err.message || 'Registration failed.');
@@ -48,7 +54,7 @@ export const RegisterPage: React.FC = () => {
     setError(null);
     try {
       await verifyOtp({ email: registerEmail, otp: otpCode });
-      navigate(selectedRole === 'DONOR' ? '/donations' : '/driver-dashboard');
+      navigate(getDestinationPath(selectedRole));
     } catch (err: any) {
       setError(err.message || 'Invalid OTP code.');
     } finally {

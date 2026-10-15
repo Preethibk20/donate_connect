@@ -13,6 +13,7 @@ public class DonateConnectApplication {
     private Environment env;
 
     public static void main(String[] args) {
+        System.setProperty("java.net.preferIPv4Addresses", "true");
         SpringApplication.run(DonateConnectApplication.class, args);
     }
 

@@ -6,11 +6,77 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Navigation, Clock, ShieldCheck, MapPin, AlertTriangle, RefreshCw, Compass, CheckCircle, Upload, KeyRound } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  Navigation, 
+  Clock, 
+  ShieldCheck, 
+  MapPin, 
+  AlertTriangle, 
+  RefreshCw, 
+  Compass, 
+  CheckCircle, 
+  Upload, 
+  KeyRound,
+  ExternalLink,
+  Zap,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+  Truck
+} from 'lucide-react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { OtpInput } from '../components/OtpInput';
 import { getWsUrl } from '../utils/urlUtils';
+
+// Types for Shortest Path & Maneuvers
+export interface RouteStep {
+  instruction: string;
+  distanceM: number;
+  durationS: number;
+  modifier?: string;
+  type?: string;
+  name?: string;
+}
+
+export interface ComputedRoute {
+  id: string;
+  name: string;
+  distanceKm: string;
+  distanceMeters: number;
+  etaMinutes: number;
+  coords: [number, number][];
+  steps: RouteStep[];
+  isShortest: boolean;
+  isFastest: boolean;
+}
+
+// Convert OSRM raw step maneuvers into friendly directions
+const formatManeuver = (step: any): string => {
+  const type = step?.maneuver?.type;
+  const modifier = step?.maneuver?.modifier;
+  const street = step?.name ? ` onto ${step.name}` : (step?.ref ? ` onto ${step.ref}` : '');
+
+  if (type === 'depart') return `Head out${street}`;
+  if (type === 'arrive') return 'Arrive at destination';
+  if (type === 'turn') {
+    if (modifier === 'left') return `Turn left${street}`;
+    if (modifier === 'right') return `Turn right${street}`;
+    if (modifier === 'slight left') return `Slight left${street}`;
+    if (modifier === 'slight right') return `Slight right${street}`;
+    if (modifier === 'sharp left') return `Sharp left${street}`;
+    if (modifier === 'sharp right') return `Sharp right${street}`;
+    if (modifier === 'uturn') return `Make a U-turn${street}`;
+    return `Turn ${modifier || ''}${street}`;
+  }
+  if (type === 'new name') return `Continue${street}`;
+  if (type === 'continue') return `Continue straight${street}`;
+  if (type === 'fork') return `Keep ${modifier || 'straight'} at fork${street}`;
+  if (type === 'roundabout') return `Take roundabout exit${street}`;
+  if (modifier) return `Head ${modifier}${street}`;
+  return street ? `Proceed${street}` : 'Continue on current road';
+};
 
 // Fix Leaflet icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -40,10 +106,16 @@ export const TrackDeliveryPage: React.FC = () => {
   const [isOffline, setIsOffline] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // OSRM Route & ETA State
+  // OSRM Shortest Path & Routing State
+  const [routeMode, setRouteMode] = useState<'shortest' | 'fastest'>('shortest');
+  const [availableRoutes, setAvailableRoutes] = useState<ComputedRoute[]>([]);
   const [osrmPath, setOsrmPath] = useState<[number, number][]>([]);
+  const [altPath, setAltPath] = useState<[number, number][]>([]);
   const [distanceKm, setDistanceKm] = useState<string | null>(null);
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
+  const [savingsKm, setSavingsKm] = useState<string | null>(null);
+  const [routeSteps, setRouteSteps] = useState<RouteStep[]>([]);
+  const [showSteps, setShowSteps] = useState(false);
   const [lastOsrmRefresh, setLastOsrmRefresh] = useState<Date | null>(null);
 
   // Proof of delivery state
@@ -151,7 +223,7 @@ export const TrackDeliveryPage: React.FC = () => {
     return () => clearInterval(checkOffline);
   }, []);
 
-  // OSRM Route & ETA fetch (Refreshes every 30 seconds)
+  // OSRM Route & ETA fetch (Refreshes every 30 seconds with Shortest Path calculation)
   useEffect(() => {
     if (!currentLoc || !donation?.ngo) return;
     if (donation.status === 'DELIVERED' || donation.status === 'REJECTED') return;
@@ -163,22 +235,67 @@ export const TrackDeliveryPage: React.FC = () => {
 
     const fetchRoute = async () => {
       try {
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${currentLoc.lng},${currentLoc.lat};${targetLng},${targetLat}?overview=full&geometries=geojson`;
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${currentLoc.lng},${currentLoc.lat};${targetLng},${targetLat}?overview=full&geometries=geojson&alternatives=true&steps=true`;
         const res = await fetch(osrmUrl);
         const data = await res.json();
 
         if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-          const route = data.routes[0];
-          const distKm = (route.distance / 1000).toFixed(1);
-          const mins = Math.round(route.duration / 60);
+          const minDistance = Math.min(...data.routes.map((r: any) => r.distance));
+          const minDuration = Math.min(...data.routes.map((r: any) => r.duration));
 
-          const coords: [number, number][] = route.geometry.coordinates.map(
-            ([lng, lat]: [number, number]) => [lat, lng]
-          );
+          const computed: ComputedRoute[] = data.routes.map((route: any, idx: number) => {
+            const distKm = (route.distance / 1000).toFixed(1);
+            const mins = Math.round(route.duration / 60);
+            const coords: [number, number][] = (route.geometry?.coordinates || []).map(
+              ([lng, lat]: [number, number]) => [lat, lng]
+            );
+            const steps: RouteStep[] = (route.legs?.[0]?.steps || []).map((s: any) => ({
+              instruction: formatManeuver(s),
+              distanceM: Math.round(s.distance || 0),
+              durationS: Math.round(s.duration || 0),
+              modifier: s.maneuver?.modifier,
+              type: s.maneuver?.type,
+              name: s.name,
+            }));
+            return {
+              id: `route-${idx}`,
+              name: idx === 0 ? 'Primary Route' : `Alternative ${idx}`,
+              distanceKm: distKm,
+              distanceMeters: route.distance,
+              etaMinutes: mins,
+              coords,
+              steps,
+              isShortest: route.distance === minDistance,
+              isFastest: route.duration === minDuration,
+            };
+          });
 
-          setOsrmPath(coords);
-          setDistanceKm(distKm);
-          setEtaMinutes(mins);
+          setAvailableRoutes(computed);
+
+          // Find alternative route for secondary polyline comparison
+          if (computed.length > 1) {
+            const alt = computed.find(r => r.distanceMeters !== minDistance) || computed[1];
+            setAltPath(alt.coords);
+            const diffKm = ((alt.distanceMeters - minDistance) / 1000).toFixed(1);
+            if (parseFloat(diffKm) > 0.05) {
+              setSavingsKm(diffKm);
+            } else {
+              setSavingsKm(null);
+            }
+          } else {
+            setAltPath([]);
+            setSavingsKm(null);
+          }
+
+          // Select route according to routeMode (default: shortest)
+          const chosen = (routeMode === 'shortest'
+            ? computed.find(r => r.isShortest)
+            : computed.find(r => r.isFastest)) || computed[0];
+
+          setOsrmPath(chosen.coords);
+          setDistanceKm(chosen.distanceKm);
+          setEtaMinutes(chosen.etaMinutes);
+          setRouteSteps(chosen.steps);
           setLastOsrmRefresh(new Date());
         }
       } catch (err) {
@@ -192,7 +309,21 @@ export const TrackDeliveryPage: React.FC = () => {
     // Refresh OSRM route every 30 seconds
     const interval = setInterval(fetchRoute, 30000);
     return () => clearInterval(interval);
-  }, [currentLoc?.lat, currentLoc?.lng, donation?.ngo?.latitude, donation?.ngo?.longitude, donation?.status]);
+  }, [currentLoc?.lat, currentLoc?.lng, donation?.ngo?.latitude, donation?.ngo?.longitude, donation?.status, delivery?.status]);
+
+  // Effect to re-select route when user toggles between shortest and fastest
+  useEffect(() => {
+    if (availableRoutes.length === 0) return;
+    const chosen = (routeMode === 'shortest'
+      ? availableRoutes.find(r => r.isShortest)
+      : availableRoutes.find(r => r.isFastest)) || availableRoutes[0];
+    if (chosen) {
+      setOsrmPath(chosen.coords);
+      setDistanceKm(chosen.distanceKm);
+      setEtaMinutes(chosen.etaMinutes);
+      setRouteSteps(chosen.steps);
+    }
+  }, [routeMode, availableRoutes]);
 
   if (loading) {
     return (
@@ -211,6 +342,17 @@ export const TrackDeliveryPage: React.FC = () => {
   const ngoLng = donation?.ngo?.longitude || (currentLoc ? currentLoc.lng + 0.03 : 77.2390);
   const ngoPoint: [number, number] = [ngoLat, ngoLng];
   const isRoutingToPickup = delivery?.status === 'ASSIGNED' || delivery?.status === 'ACCEPTED_BY_VOLUNTEER' || delivery?.status === 'EN_ROUTE_TO_PICKUP';
+  const targetLat = isRoutingToPickup && donation?.pickupLat ? donation.pickupLat : ngoLat;
+  const targetLng = isRoutingToPickup && donation?.pickupLng ? donation.pickupLng : ngoLng;
+
+  const handleOpenGoogleMaps = () => {
+    const originStr = currentLoc ? `${currentLoc.lat},${currentLoc.lng}` : '';
+    const destStr = `${targetLat},${targetLng}`;
+    const url = originStr 
+      ? `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}&travelmode=driving`
+      : `https://www.google.com/maps/search/?api=1&query=${destStr}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const handleCompleteDelivery = async () => {
     if (!delivery || !otp || !proofImage) {
@@ -241,7 +383,7 @@ export const TrackDeliveryPage: React.FC = () => {
   return (
     <div className="py-6 space-y-6 max-w-5xl mx-auto px-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
@@ -260,10 +402,69 @@ export const TrackDeliveryPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 30s Refresh Indicator */}
-        <div className="hidden sm:flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full text-xs font-medium text-indigo-700">
-          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-          OSRM Route auto-refreshed (30s)
+        {/* Action Controls Header */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={handleOpenGoogleMaps}
+            className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 transition-all active:scale-95"
+            title="Open turn-by-turn navigation in Google Maps"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Open Google Maps GPS
+          </button>
+
+          {/* 30s Refresh Indicator */}
+          <div className="hidden sm:flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full text-xs font-medium text-indigo-700">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            OSRM Route auto-refreshed (30s)
+          </div>
+        </div>
+      </div>
+
+      {/* Shortest Path Optimization Selector Bar */}
+      <div className="bg-slate-900 text-white p-3.5 sm:p-4 rounded-2xl border border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <Compass className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Route Strategy:</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                {routeMode === 'shortest' ? '🎯 Shortest Road Distance' : '⚡ Fastest Travel ETA'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              {savingsKm
+                ? `Shortest path saves ${savingsKm} km vs alternative road routes!`
+                : 'Routing via live OpenStreetMap road network matrix.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setRouteMode('shortest')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              routeMode === 'shortest'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+            }`}
+          >
+            🎯 Shortest Path
+            {savingsKm && <span className="text-[10px] bg-emerald-500 text-slate-950 font-black px-1.5 py-0.2 rounded-full">-{savingsKm}km</span>}
+          </button>
+          <button
+            onClick={() => setRouteMode('fastest')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              routeMode === 'fastest'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            Fastest ETA
+          </button>
         </div>
       </div>
 
@@ -274,7 +475,12 @@ export const TrackDeliveryPage: React.FC = () => {
             <Compass className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Distance to {isRoutingToPickup ? 'Pickup' : 'NGO'}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Distance to {isRoutingToPickup ? 'Pickup' : 'NGO'}</p>
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                {routeMode === 'shortest' ? 'Shortest' : 'Fastest'}
+              </span>
+            </div>
             <p className="text-xl font-black text-slate-900">
               {distanceKm ? `${distanceKm} km` : 'Calculating...'}
             </p>
@@ -454,9 +660,19 @@ export const TrackDeliveryPage: React.FC = () => {
                 </Popup>
               </Marker>
 
-              {/* OSRM Route Polyline (Planned route to NGO) */}
+              {/* Alternative Route Polyline (dashed gray comparison) */}
+              {altPath.length > 0 && (
+                <Polyline positions={altPath} color="#94a3b8" weight={5} opacity={0.65} dashArray="6, 8" />
+              )}
+
+              {/* Selected Primary Route Polyline (Shortest or Fastest) */}
               {osrmPath.length > 0 && (
-                <Polyline positions={osrmPath} color="#6366f1" weight={6} opacity={0.85} dashArray="8, 8" />
+                <Polyline 
+                  positions={osrmPath} 
+                  color={routeMode === 'shortest' ? '#4f46e5' : '#0284c7'} 
+                  weight={6} 
+                  opacity={0.9} 
+                />
               )}
 
               {/* Traveled GPS History Path Polyline */}
@@ -477,6 +693,70 @@ export const TrackDeliveryPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Turn-by-Turn Route Guidance Panel */}
+      {routeSteps.length > 0 && (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-lg overflow-hidden transition-all">
+          <div 
+            onClick={() => setShowSteps(!showSteps)}
+            className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors select-none"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                <Navigation className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span>Turn-by-Turn Route Guidance</span>
+                  <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">
+                    {routeSteps.length} Steps
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {routeSteps[0] ? `Next: ${routeSteps[0].instruction}` : 'Step-by-step navigation directions'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-slate-400">
+              <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
+                {showSteps ? 'Hide Maneuvers' : 'Show All Maneuvers'}
+              </span>
+              {showSteps ? (
+                <ChevronUp className="w-5 h-5 text-slate-600" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-slate-600" />
+              )}
+            </div>
+          </div>
+
+          {showSteps && (
+            <div className="border-t border-slate-100 p-4 sm:p-5 bg-slate-50/50 max-h-80 overflow-y-auto space-y-2.5">
+              {routeSteps.map((step, idx) => (
+                <div 
+                  key={idx}
+                  className="flex items-start gap-3 p-3 rounded-xl bg-white border border-slate-200/80 shadow-xs hover:border-indigo-200 transition-all"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 text-xs font-black">
+                    {idx + 1}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-slate-800">{step.instruction}</p>
+                    {step.name && (
+                      <p className="text-[11px] text-slate-400">{step.name}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[11px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                      {step.distanceM >= 1000 ? `${(step.distanceM / 1000).toFixed(1)} km` : `${step.distanceM} m`}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

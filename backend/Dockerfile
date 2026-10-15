@@ -18,7 +18,7 @@ USER spring:spring
 
 COPY --from=build /app/target/*.jar app.jar
 
-ENV JAVA_TOOL_OPTIONS="-Xmx350m -XX:+UseSerialGC"
+ENV JAVA_TOOL_OPTIONS="-Xmx350m -XX:+UseSerialGC -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.net.preferIPv4Addresses=true"
 ENV SERVER_PORT="${PORT:-8080}"
 
 EXPOSE 8080

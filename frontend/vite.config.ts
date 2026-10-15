@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const proxyTarget = env.E2E_BACKEND_URL || 'http://localhost:8080';
+  const proxyTarget = env.E2E_BACKEND_URL || 'http://localhost:8081';
 
   return {
     plugins: [react(), tailwindcss()],

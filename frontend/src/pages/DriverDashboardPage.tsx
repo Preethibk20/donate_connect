@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getMyVolunteerTasks, getAvailablePickups, claimVolunteerPickup, updateVolunteerTaskStatus } from '../api/volunteerApi';
 import { Donation, PageResponse, VolunteerTask } from '../types';
 import { useToast } from '../context/ToastContext';
-import { Truck, CheckCircle2, MapPin, Calendar, Clock, RefreshCw, PackageSearch, ChevronRight } from 'lucide-react';
+import { Truck, CheckCircle2, MapPin, Calendar, Clock, RefreshCw, PackageSearch, ChevronRight, Navigation, Compass } from 'lucide-react';
 import { LiveLocationTracker } from '../components/LiveLocationTracker';
 type DashboardTab = 'my-tasks' | 'available';
 
@@ -178,7 +178,15 @@ export const DriverDashboardPage: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="border-t border-slate-800 pt-3 flex items-center gap-2">
+                  <div className="border-t border-slate-800 pt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <button
+                      onClick={() => navigate(`/donations/${task.donation.id}/track`)}
+                      className="py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                      title="View shortest route on map and launch GPS directions"
+                    >
+                      <Navigation className="w-3.5 h-3.5 text-indigo-400" />
+                      Shortest Route & GPS
+                    </button>
                     <button
                       data-testid={`transit-button-${task.donation.id}`}
                       onClick={() => handleStatusChange(task.id, 'IN_TRANSIT')}

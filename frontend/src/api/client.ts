@@ -7,7 +7,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 60000,
+  timeout: 15000,
 });
 
 let inMemoryToken: string | null = localStorage.getItem('dc-token');

@@ -25,7 +25,8 @@ Check-Port 8081
 Check-Port 5173
 
 Write-Host "Starting e2e backend..."
-Start-Process -FilePath ".\mvnw.cmd" -ArgumentList "spring-boot:run -Dspring-boot.run.profiles=e2e" -WorkingDirectory "backend"
+$env:CORS_ALLOWED_ORIGINS="http://localhost:5173,http://localhost:3000"
+Start-Process -FilePath ".\mvnw.cmd" -ArgumentList "spring-boot:run `"-Dspring-boot.run.profiles=e2e`" `"-Dspring-boot.run.arguments=--spring.config.additional-location=file:./e2e/`"" -WorkingDirectory "backend"
 
 Write-Host "Waiting 15 seconds for backend..."
 Start-Sleep -Seconds 15

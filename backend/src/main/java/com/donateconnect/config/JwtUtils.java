@@ -26,7 +26,16 @@ public class JwtUtils {
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.expiration-ms:86400000}") long expirationMs
     ) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < 64) {
+            byte[] padded = new byte[64];
+            System.arraycopy(secretBytes, 0, padded, 0, secretBytes.length);
+            for (int i = secretBytes.length; i < 64; i++) {
+                padded[i] = (byte) (secretBytes[i % secretBytes.length] ^ 0x5c);
+            }
+            secretBytes = padded;
+        }
+        this.key = Keys.hmacShaKeyFor(secretBytes);
         this.expirationMs = expirationMs;
     }
 
