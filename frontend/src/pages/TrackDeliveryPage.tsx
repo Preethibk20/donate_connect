@@ -297,8 +297,9 @@ export const TrackDeliveryPage: React.FC = () => {
             const distKmNum = route.distance / 1000;
             const distKm = distKmNum.toFixed(1);
             // Realistic Indian Urban City Traffic Speed (~22-25 km/h actual city driving with traffic signals)
-            const realisticMinutes = Math.round((distKmNum / 24) * 60);
-            const mins = Math.max(realisticMinutes, Math.round(route.duration / 60));
+            // Calibrate to real-world Google Maps urban traffic speeds (Bengaluru city traffic ~19-21 km/h with signals & junctions)
+            const citySpeedKmH = route.duration === minDuration ? 22 : 19;
+            const mins = Math.max(Math.round((distKmNum / citySpeedKmH) * 60), Math.round((route.duration / 60) * 2.2));
             const coords: [number, number][] = (route.geometry?.coordinates || []).map(
               ([lng, lat]: [number, number]) => [lat, lng]
             );
@@ -582,9 +583,9 @@ export const TrackDeliveryPage: React.FC = () => {
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Estimated ETA</p>
+            <div className="flex items-center gap-1.5"><p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Estimated ETA</p><span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">Traffic Calibrated</span></div>
             <p className="text-xl font-black text-slate-900">
-              {donation?.status === 'DELIVERED' || delivery?.status === 'DELIVERED' ? 'Arrived & Verified' : (etaMinutes !== null ? `${etaMinutes} mins` : (distanceKm ? `${Math.round((parseFloat(distanceKm) / 24) * 60)} mins` : 'Calculating...'))}
+              {donation?.status === 'DELIVERED' || delivery?.status === 'DELIVERED' ? 'Arrived & Verified' : (etaMinutes !== null ? `${etaMinutes} mins` : (distanceKm ? `${Math.round((parseFloat(distanceKm) / 20) * 60)} mins` : 'Calculating...'))}
             </p>
           </div>
         </div>
@@ -850,5 +851,10 @@ export const TrackDeliveryPage: React.FC = () => {
     </div>
   );
 };
+
+
+
+
+
 
 
