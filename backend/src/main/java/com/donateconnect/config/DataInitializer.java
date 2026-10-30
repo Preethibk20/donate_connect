@@ -117,7 +117,7 @@ public class DataInitializer implements CommandLineRunner {
                 resolvePassword("password123"),
                 "Akshaya Patra Foundation",
                 "Operating the world's largest mid-day meal program, serving wholesome hot cooked meals to over 2 million school children across India every day.",
-                "HK Hill, Chord Road, Rajajinagar, Bengaluru, Karnataka - 560010",
+                "Chord Road, Rajajinagar, Bengaluru, Karnataka 560010",
                 "+91 80 3014 3400",
                 true
         );
