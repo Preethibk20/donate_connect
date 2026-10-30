@@ -148,10 +148,14 @@ async function recordFullWorkingDemo() {
     if (availableTab) {
       await availableTab.click();
       await page.waitForTimeout(3000);
+      await page.mouse.wheel(0, 300);
+      await page.waitForTimeout(2000);
+      await page.mouse.wheel(0, -300);
+      await page.waitForTimeout(1000);
     }
 
-    // Switch back to My Active Deliveries
-    const myTasksTab = await page.$('button:has-text("My Active Deliveries")');
+    // Switch back to My Tasks
+    const myTasksTab = await page.$('button:has-text("My Tasks")');
     if (myTasksTab) {
       await myTasksTab.click();
       await page.waitForTimeout(2500);
