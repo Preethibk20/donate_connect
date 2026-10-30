@@ -91,44 +91,49 @@ export const LiveLocationTracker: React.FC<Props> = ({ deliveryId, status, donat
 
     const simulateRoute = async () => {
         if (!donation) return;
-        const startLat = donation.pickupLat || 12.9716;
-        const startLng = donation.pickupLng || 77.5946;
-        const endLat = donation.ngo?.latitude || 28.6439;
-        const endLng = donation.ngo?.longitude || 77.2390;
+        // 2-Leg Journey:
+        // Leg 1: Driver Location -> Donor Pickup Doorstep
+        // Leg 2: Donor Pickup Doorstep -> NGO Hub Destination
+        const driverStartLat = (donation.pickupLat || 12.9716) - 0.02; // Driver starts ~2km away
+        const driverStartLng = (donation.pickupLng || 77.5946) - 0.02;
+        const donorLat = donation.pickupLat || 12.9716;
+        const donorLng = donation.pickupLng || 77.5946;
+        const ngoLat = donation.ngo?.latitude || 12.9899;
+        const ngoLng = donation.ngo?.longitude || 77.5534;
 
-        // Generate a simple linear interpolation fallback
-        const generateFallbackRoute = (sLat: number, sLng: number, eLat: number, eLng: number, steps = 50): [number, number][] => {
+        const generateFallbackRoute = (sLat: number, sLng: number, eLat: number, eLng: number, steps = 25): [number, number][] => {
             const route: [number, number][] = [];
             for (let s = 0; s <= steps; s++) {
                 const t = s / steps;
-                route.push([sLng + (eLng - sLng) * t, sLat + (eLat - sLat) * t]); // [lng, lat] to match OSRM format
+                route.push([sLng + (eLng - sLng) * t, sLat + (eLat - sLat) * t]);
             }
             return route;
         };
 
-        let coords: [number, number][];
+        const fetchSegmentCoords = async (sLat: number, sLng: number, eLat: number, eLng: number): Promise<[number, number][]> => {
+            try {
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sLng},${sLat};${eLng},${eLat}?overview=full&geometries=geojson`;
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 4000);
+                const res = await fetch(osrmUrl, { signal: controller.signal });
+                clearTimeout(timeout);
+                const data = await res.json();
+                if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                    return data.routes[0].geometry.coordinates;
+                }
+            } catch (e) {
+                console.warn('OSRM segment fetch failed:', e);
+            }
+            return generateFallbackRoute(sLat, sLng, eLat, eLng);
+        };
 
         setIsSimulating(true);
         setIsSharing(true);
 
-        try {
-            const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
-            const res = await fetch(osrmUrl, { signal: controller.signal });
-            clearTimeout(timeout);
-            const data = await res.json();
-
-            if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-                coords = data.routes[0].geometry.coordinates; // [lng, lat]
-            } else {
-                console.warn('OSRM returned no routes, using fallback');
-                coords = generateFallbackRoute(startLat, startLng, endLat, endLng);
-            }
-        } catch (e) {
-            console.warn('OSRM unreachable, using straight-line fallback:', e);
-            coords = generateFallbackRoute(startLat, startLng, endLat, endLng);
-        }
+        // Fetch Shortest Road Routes for both legs
+        const leg1Coords = await fetchSegmentCoords(driverStartLat, driverStartLng, donorLat, donorLng);
+        const leg2Coords = await fetchSegmentCoords(donorLat, donorLng, ngoLat, ngoLng);
+        const coords: [number, number][] = [...leg1Coords, ...leg2Coords];
 
         let i = 0;
         intervalRef.current = setInterval(() => {
