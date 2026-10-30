@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getMyVolunteerTasks, getAvailablePickups, claimVolunteerPickup, updateVolunteerTaskStatus } from '../api/volunteerApi';
 import { Donation, PageResponse, VolunteerTask } from '../types';
 import { useToast } from '../context/ToastContext';
-import { Truck, CheckCircle2, MapPin, Calendar, Clock, RefreshCw, PackageSearch, ChevronRight, Navigation, Compass } from 'lucide-react';
+import { Truck, CheckCircle2, MapPin, Calendar, Clock, RefreshCw, PackageSearch, ChevronRight, Navigation, Compass, XCircle, Check } from 'lucide-react';
 import { LiveLocationTracker } from '../components/LiveLocationTracker';
 type DashboardTab = 'my-tasks' | 'available';
 
@@ -14,7 +14,21 @@ export const DriverDashboardPage: React.FC = () => {
   const [available, setAvailable] = useState<PageResponse<Donation> | null>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState<string | null>(null);
+  const [declinedIds, setDeclinedIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('dc-driver-declined-pickups') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const { showSuccess, showError } = useToast();
+
+  const handleDecline = (donationId: string) => {
+    const updated = [...declinedIds, donationId];
+    setDeclinedIds(updated);
+    localStorage.setItem('dc-driver-declined-pickups', JSON.stringify(updated));
+    showSuccess('Order declined and skipped from your feed.');
+  };
 
   const fetchMyTasks = async () => {
     setLoading(true);
@@ -230,7 +244,7 @@ export const DriverDashboardPage: React.FC = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {available.content.map((donation) => (
+                {available.content.filter((d) => !declinedIds.includes(d.id)).map((donation) => (
                   <div
                     key={donation.id}
                     data-testid={`available-card-${donation.id}`}
