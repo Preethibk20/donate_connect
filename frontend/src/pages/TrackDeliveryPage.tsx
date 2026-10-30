@@ -294,8 +294,11 @@ export const TrackDeliveryPage: React.FC = () => {
           const minDuration = Math.min(...data.routes.map((r: any) => r.duration));
 
           const computed: ComputedRoute[] = data.routes.map((route: any, idx: number) => {
-            const distKm = (route.distance / 1000).toFixed(1);
-            const mins = Math.round(route.duration / 60);
+            const distKmNum = route.distance / 1000;
+            const distKm = distKmNum.toFixed(1);
+            // Realistic Indian Urban City Traffic Speed (~22-25 km/h actual city driving with traffic signals)
+            const realisticMinutes = Math.round((distKmNum / 24) * 60);
+            const mins = Math.max(realisticMinutes, Math.round(route.duration / 60));
             const coords: [number, number][] = (route.geometry?.coordinates || []).map(
               ([lng, lat]: [number, number]) => [lat, lng]
             );
