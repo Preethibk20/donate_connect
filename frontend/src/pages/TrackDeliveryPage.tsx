@@ -138,9 +138,17 @@ export const TrackDeliveryPage: React.FC = () => {
     const fetchLoc = async () => {
       try {
         const loc = await getLiveLocation(id);
-        if (loc.lat && loc.lng) {
+        if (loc && loc.lat && loc.lng) {
           setCurrentLoc({ lat: loc.lat, lng: loc.lng });
           setPath((prev) => [...prev, [loc.lat, loc.lng]]);
+          setLastUpdated(new Date());
+        } else {
+          // Default initial position ~2km from donor so the shortest path and Leaflet map render immediately
+          const dData = await getDonationById(id as string).catch(() => null);
+          const defaultStartLat = (dData?.pickupLat || 12.9716) - 0.02;
+          const defaultStartLng = (dData?.pickupLng || 77.5946) - 0.02;
+          setCurrentLoc({ lat: defaultStartLat, lng: defaultStartLng });
+          setPath([[defaultStartLat, defaultStartLng]]);
           setLastUpdated(new Date());
         }
       } catch (err) {
