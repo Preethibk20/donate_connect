@@ -190,7 +190,7 @@ async function recordFullWorkingDemo() {
     // ----------------------------------------------------
     console.log('SCENE 5: Corporate CSR Portal Visible Login (Tata Trust CSR)...');
     await visibleLogout();
-    await performVisibleLogin('Donor', 'csr@tata.com', 'corporate123');
+    await performVisibleLogin('Corporate', 'csr@tata.com', 'corporate123');
     await page.goto('http://localhost:5173/csr-dashboard');
     await page.waitForTimeout(4500);
     await page.mouse.wheel(0, 400);

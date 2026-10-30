@@ -20,8 +20,7 @@ export const CorporateDashboardPage: React.FC = () => {
   const [endDate, setEndDate] = useState('');
 
   const fetchDrives = () => {
-    getCorporateDrives()
-      .then((data) => setDrives(data))
+    getCorporateDrives().then((data) => setDrives(Array.isArray(data) ? data : []))
       .catch(() => setDrives([]))
       .finally(() => setLoading(false));
   };
@@ -80,7 +79,7 @@ export const CorporateDashboardPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const totalCollected = drives.reduce((sum, drive) => sum + drive.collectedItemCount, 0);
+  const totalCollected = Array.isArray(drives) ? drives.reduce((sum, drive) => sum + (drive.collectedItemCount || 0), 0) : 0;
   const activeDrivesCount = drives.length;
 
   return (
@@ -332,3 +331,5 @@ export const CorporateDashboardPage: React.FC = () => {
     </div>
   );
 };
+
+

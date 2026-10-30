@@ -11,7 +11,7 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'DONOR' | 'NGO' | 'ADMIN' | 'VOLUNTEER'>('DONOR');
+  const [selectedRole, setSelectedRole] = useState<'DONOR' | 'NGO' | 'ADMIN' | 'VOLUNTEER' | 'CORPORATE'>('DONOR');
   
   // OTP State
   const [showOtp, setShowOtp] = useState(false);
@@ -25,21 +25,24 @@ export const LoginPage: React.FC = () => {
     formState: { errors },
   } = useForm<LoginRequest>();
 
-  const handleRoleSelect = (role: 'DONOR' | 'NGO' | 'ADMIN' | 'VOLUNTEER') => {
+  const handleRoleSelect = (role: 'DONOR' | 'NGO' | 'ADMIN' | 'VOLUNTEER' | 'CORPORATE') => {
     setSelectedRole(role);
     // Auto-fill demo credentials to make testing easier
     if (role === 'DONOR') {
       setValue('email', 'priya.patel@gmail.com');
       setValue('password', 'donor123');
     } else if (role === 'NGO') {
-      setValue('email', 'contact@goonj.org');
+      setValue('email', 'info@akshayapatra.org');
       setValue('password', 'password123');
     } else if (role === 'ADMIN') {
       setValue('email', 'admin@donateconnect.in');
       setValue('password', 'admin123');
     } else if (role === 'VOLUNTEER') {
-      setValue('email', 'delivery@example.com');
+      setValue('email', 'dispatch@donateconnect.in');
       setValue('password', 'driver123');
+    } else if (role === 'CORPORATE') {
+      setValue('email', 'csr@tata.com');
+      setValue('password', 'corporate123');
     }
   };
 
@@ -137,6 +140,17 @@ export const LoginPage: React.FC = () => {
                 }`}
               >
                 NGO
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRoleSelect('CORPORATE')}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                  selectedRole === 'CORPORATE'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                Corporate
               </button>
               <button
                 type="button"
