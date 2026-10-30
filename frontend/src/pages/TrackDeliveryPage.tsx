@@ -572,7 +572,7 @@ export const TrackDeliveryPage: React.FC = () => {
               </span>
             </div>
             <p className="text-xl font-black text-slate-900">
-              {distanceKm ? `${distanceKm} km` : 'Calculating...'}
+              {donation?.status === 'DELIVERED' ? '0.0 km (Delivered)' : (distanceKm ? `${distanceKm} km` : 'Calculating...')}
             </p>
           </div>
         </div>
@@ -584,7 +584,7 @@ export const TrackDeliveryPage: React.FC = () => {
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Estimated ETA</p>
             <p className="text-xl font-black text-slate-900">
-              {etaMinutes !== null ? `${etaMinutes} mins` : 'Calculating...'}
+              {donation?.status === 'DELIVERED' ? 'Arrived & Verified' : (etaMinutes !== null ? `${etaMinutes} mins` : 'Calculating...')}
             </p>
           </div>
         </div>
