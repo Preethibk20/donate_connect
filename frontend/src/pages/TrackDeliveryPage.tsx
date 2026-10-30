@@ -412,6 +412,43 @@ export const TrackDeliveryPage: React.FC = () => {
 
         {/* Action Controls Header */}
         <div className="flex items-center gap-2.5 flex-wrap">
+          {isVolunteer && delivery?.status !== 'DELIVERED' && (
+            <button
+              onClick={() => {
+                if (!navigator.geolocation) {
+                  alert('Geolocation not supported by your browser');
+                  return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    const { latitude, longitude, speed, heading } = pos.coords;
+                    setCurrentLoc({ lat: latitude, lng: longitude });
+                    setPath((prev) => [...prev, [latitude, longitude]]);
+                    setLastUpdated(new Date());
+                    if (delivery?.id) {
+                      import('../api/volunteerApi').then(({ sendLocationUpdate }) => {
+                        sendLocationUpdate(delivery.id, {
+                          deliveryId: delivery.id,
+                          lat: latitude,
+                          lng: longitude,
+                          speed: speed || 0,
+                          heading: heading || 0,
+                          timestamp: new Date().toISOString()
+                        });
+                      });
+                    }
+                  },
+                  (err) => alert('GPS Error: ' + err.message),
+                  { enableHighAccuracy: true, timeout: 10000 }
+                );
+              }}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/30 transition-all active:scale-95"
+              title="Broadcast current phone GPS location"
+            >
+              <Navigation className="w-3.5 h-3.5 animate-pulse" />
+              Send My Current GPS
+            </button>
+          )}
           <button
             onClick={handleOpenGoogleMaps}
             className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 transition-all active:scale-95"
