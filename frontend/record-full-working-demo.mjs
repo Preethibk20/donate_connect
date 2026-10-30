@@ -29,7 +29,7 @@ async function recordFullWorkingDemo() {
 
   async function performVisibleLogin(roleName, customEmail, customPassword) {
     console.log(`\n>>> VISIBLE UI LOGIN: Role = ${roleName} (${customEmail})`);
-    await page.goto('http://localhost:5174/login');
+    await page.goto('http://localhost:5173/login');
     await page.waitForTimeout(1800);
 
     // Click the visible role tab button
@@ -69,7 +69,7 @@ async function recordFullWorkingDemo() {
     // SCENE 1: Public Homepage & Mission Showcase
     // ----------------------------------------------------
     console.log('SCENE 1: Public Homepage Showcase...');
-    await page.goto('http://localhost:5174/');
+    await page.goto('http://localhost:5173/');
     await page.waitForTimeout(3000);
     
     // Smooth scroll down to showcase live impact stats and features
@@ -87,7 +87,7 @@ async function recordFullWorkingDemo() {
     await performVisibleLogin('Donor', 'priya.patel@gmail.com', 'donor123');
 
     // Donor History
-    await page.goto('http://localhost:5174/donations');
+    await page.goto('http://localhost:5173/donations');
     await page.waitForTimeout(3500);
     await page.mouse.wheel(0, 350);
     await page.waitForTimeout(2500);
@@ -100,7 +100,7 @@ async function recordFullWorkingDemo() {
     if (newDonationBtn) {
       await newDonationBtn.click();
     } else {
-      await page.goto('http://localhost:5174/donations/new');
+      await page.goto('http://localhost:5173/donations/new');
     }
     await page.waitForTimeout(3500);
     await page.mouse.wheel(0, 400);
@@ -116,7 +116,7 @@ async function recordFullWorkingDemo() {
     await performVisibleLogin('NGO', 'info@akshayapatra.org', 'password123');
 
     // NGO Dashboard
-    await page.goto('http://localhost:5174/ngo-dashboard');
+    await page.goto('http://localhost:5173/ngo-dashboard');
     await page.waitForTimeout(4000);
     await page.mouse.wheel(0, 350);
     await page.waitForTimeout(2500);
@@ -139,7 +139,7 @@ async function recordFullWorkingDemo() {
     await performVisibleLogin('Delivery', 'dispatch@donateconnect.in', 'driver123');
 
     // Driver Dashboard
-    await page.goto('http://localhost:5174/driver-dashboard');
+    await page.goto('http://localhost:5173/driver-dashboard');
     await page.waitForTimeout(4000);
 
     // Show Available Pickups Tab (demonstrating Accept/Decline options)
@@ -191,7 +191,7 @@ async function recordFullWorkingDemo() {
     console.log('SCENE 5: Corporate CSR Portal Visible Login (Tata Trust CSR)...');
     await visibleLogout();
     await performVisibleLogin('Donor', 'csr@tata.com', 'corporate123');
-    await page.goto('http://localhost:5174/csr-dashboard');
+    await page.goto('http://localhost:5173/csr-dashboard');
     await page.waitForTimeout(4500);
     await page.mouse.wheel(0, 400);
     await page.waitForTimeout(2500);
@@ -202,7 +202,7 @@ async function recordFullWorkingDemo() {
     // SCENE 6: Immutable SHA-256 Blockchain Ledger
     // ----------------------------------------------------
     console.log('SCENE 6: Cryptographic Blockchain Ledger...');
-    await page.goto('http://localhost:5174/blockchain-ledger');
+    await page.goto('http://localhost:5173/blockchain-ledger');
     await page.waitForTimeout(5000);
     await page.mouse.wheel(0, 500);
     await page.waitForTimeout(3500);
@@ -241,3 +241,5 @@ async function recordFullWorkingDemo() {
 }
 
 recordFullWorkingDemo();
+
+
