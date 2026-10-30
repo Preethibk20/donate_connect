@@ -217,6 +217,48 @@ export const TrackDeliveryPage: React.FC = () => {
     };
   }, [id, token]);
 
+  // AUTOMATIC GPS PROMPT: When the delivery driver opens the tracking screen, automatically prompt for device GPS
+  useEffect(() => {
+    if (user?.role !== 'VOLUNTEER' || !delivery || delivery.status === 'DELIVERED') return;
+    if (!navigator.geolocation) return;
+
+    let watchId: number | null = null;
+    let autoSyncInterval: any = null;
+
+    // Trigger native browser permission prompt automatically
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, speed, heading } = pos.coords;
+        setCurrentLoc({ lat: latitude, lng: longitude });
+        setPath((prev) => [...prev, [latitude, longitude]]);
+        setLastUpdated(new Date());
+
+        // Broadcast to backend immediately
+        if (delivery.id) {
+          import('../api/volunteerApi').then(({ sendLocationUpdate }) => {
+            sendLocationUpdate(delivery.id, {
+              deliveryId: delivery.id,
+              lat: latitude,
+              lng: longitude,
+              speed: speed || 0,
+              heading: heading || 0,
+              timestamp: new Date().toISOString()
+            }).catch(() => {});
+          });
+        }
+      },
+      (err) => {
+        console.warn('Auto GPS prompt rejected or failed:', err.message);
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+    );
+
+    return () => {
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      if (autoSyncInterval) clearInterval(autoSyncInterval);
+    };
+  }, [user?.role, delivery?.id, delivery?.status]);
+
   // Offline checker
   useEffect(() => {
     const checkOffline = setInterval(() => {
