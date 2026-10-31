@@ -3,14 +3,41 @@ import { Link } from 'react-router-dom';
 import { getActiveUrgentNeeds } from '../api/ngoApi';
 import { NgoUrgentNeed } from '../types';
 
+const INITIAL_URGENT_NEEDS: NgoUrgentNeed[] = [
+  {
+    id: "56713c94-8fe4-441e-ae7c-bfa601da2343",
+    ngoId: "6d72f778-6bc7-4127-83a1-2d3c00360022",
+    ngoName: "Akshaya Patra Foundation",
+    ngoCity: "Bengaluru Hub",
+    title: "Emergency Relief Drive: Basmati Rice, Wheat Flour & Lentils Needed for Wayanad Relief Camps",
+    description: "Our community kitchens are preparing 5,000 daily hot meals for flood displaced families. Contributions of staple grains requested urgently.",
+    category: "FOOD" as any,
+    active: true,
+  } as any,
+  {
+    id: "2f12de4e-7d97-4442-a01a-ce8102f9611b",
+    ngoId: "73c6b3db-3728-4685-a15e-9c2090d1691e",
+    ngoName: "HelpAge India Relief Society",
+    ngoCity: "Himachal Relief",
+    title: "Urgent Appeal: 200 Woolen Blankets & Tarpaulins for Himachal Hill Shelter Drive",
+    description: "Severe winter frost has affected elderly residents in Himachal shelters. We urgently need thermal blankets, shawls, and tarps.",
+    category: "CLOTHES" as any,
+    active: true,
+  } as any,
+];
+
 export const UrgentNeedsBanner: React.FC = () => {
-  const [urgentNeeds, setUrgentNeeds] = useState<NgoUrgentNeed[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [urgentNeeds, setUrgentNeeds] = useState<NgoUrgentNeed[]>(INITIAL_URGENT_NEEDS);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     getActiveUrgentNeeds()
-      .then((data) => setUrgentNeeds(data))
-      .catch(() => setUrgentNeeds([]))
+      .then((data) => {
+        if (data && data.length > 0) {
+          setUrgentNeeds(data);
+        }
+      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

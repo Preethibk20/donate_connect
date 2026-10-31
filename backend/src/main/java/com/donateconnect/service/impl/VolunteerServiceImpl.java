@@ -195,6 +195,10 @@ public class VolunteerServiceImpl implements VolunteerService {
                 .photoUrls(d.getPhotoUrls())
                 .status(d.getStatus())
                 .pickupDate(d.getPickupDate())
+                .pickupTimeSlot(d.getPickupTimeSlot())
+                .pickupAddress(d.getPickupAddress())
+                .pickupLat(d.getPickupLat())
+                .pickupLng(d.getPickupLng())
                 .createdAt(d.getCreatedAt())
                 .updatedAt(d.getUpdatedAt())
                 .build();

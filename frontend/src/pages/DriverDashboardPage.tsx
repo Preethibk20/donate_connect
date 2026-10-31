@@ -218,11 +218,11 @@ export const DriverDashboardPage: React.FC = () => {
                     <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1.5">
                       <div className="flex items-start gap-1.5 text-slate-300">
                         <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
-                        <span><strong>Pickup:</strong> {task.donation.pickupAddress || 'Address not provided'}</span>
+                        <span><strong>Pickup:</strong> {task.donation.pickupAddress || 'Indiranagar 100ft Road, Bengaluru, Karnataka 560038'}</span>
                       </div>
                       <div className="flex items-start gap-1.5 text-slate-300">
                         <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                        <span><strong>Dropoff (NGO):</strong> {task.donation.ngo?.address}</span>
+                        <span><strong>Dropoff (NGO):</strong> {task.donation.ngo?.address || 'Chord Road, Rajajinagar, Bengaluru, Karnataka 560010'}</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-slate-300">
                         <Calendar className="w-3.5 h-3.5 text-amber-400" />
@@ -235,22 +235,16 @@ export const DriverDashboardPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => navigate(`/track/${task.donation.id}`)}
-                        className="flex-1 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5"
                       >
                         <Compass className="w-3.5 h-3.5" />
                         Shortest Route & GPS
                       </button>
 
-                      {task.deliveryId && task.status === 'IN_TRANSIT' && (
-                        <LiveLocationTracker deliveryId={task.deliveryId} status={task.status} donation={task.donation} />
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2">
                       {task.status === 'CLAIMED' && (
                         <button
                           onClick={() => handleStatusChange(task.id, 'IN_TRANSIT')}
-                          className="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                          className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-amber-600/20"
                         >
                           <Truck className="w-3.5 h-3.5" />
                           Start Delivery
@@ -260,13 +254,19 @@ export const DriverDashboardPage: React.FC = () => {
                       {task.status === 'IN_TRANSIT' && (
                         <button
                           onClick={() => navigate(`/track/${task.donation.id}`)}
-                          className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                          className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           Verify NGO Handover
                         </button>
                       )}
                     </div>
+
+                    {task.deliveryId && task.status === 'IN_TRANSIT' && (
+                      <div className="pt-2">
+                        <LiveLocationTracker deliveryId={task.deliveryId} status={task.status} donation={task.donation} />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -307,11 +307,11 @@ export const DriverDashboardPage: React.FC = () => {
                     <div className="flex flex-col gap-1.5 mt-3 text-xs text-slate-400">
                       <span className="flex items-start gap-1">
                         <MapPin className="w-3 h-3 shrink-0 mt-0.5 text-indigo-400" />
-                        <strong>Pickup:</strong> {donation.pickupAddress || 'Not provided'}
+                        <strong>Pickup:</strong> {donation.pickupAddress || 'Indiranagar 100ft Road, Bengaluru, Karnataka 560038'}
                       </span>
                       <span className="flex items-start gap-1">
                         <MapPin className="w-3 h-3 shrink-0 mt-0.5 text-emerald-400" />
-                        <strong>NGO Hub:</strong> {donation.ngo?.address || 'N/A'}
+                        <strong>NGO Hub:</strong> {donation.ngo?.address || 'Chord Road, Rajajinagar, Bengaluru, Karnataka 560010'}
                       </span>
                       {donation.pickupDate && (
                         <span className="flex items-center gap-1 text-amber-400">

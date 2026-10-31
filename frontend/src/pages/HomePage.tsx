@@ -13,14 +13,54 @@ import {
   Phone
 } from 'lucide-react';
 
+const INITIAL_VERIFIED_NGOS: NGOProfile[] = [
+  {
+    id: "6d72f778-6bc7-4127-83a1-2d3c00360022",
+    name: "Akshaya Patra Foundation",
+    description: "World's largest NGO-run mid-day school meal programme, serving freshly cooked, wholesome meals to millions of children.",
+    address: "Chord Road, Rajajinagar, Bengaluru, Karnataka 560010",
+    phone: "+91 80 3014 3400",
+    latitude: 12.9894782,
+    longitude: 77.550574,
+    verified: true,
+    urgentNeeds: [],
+  } as any,
+  {
+    id: "61b0d97d-89e9-4d04-abcc-582c64f6f127",
+    name: "Goonj Foundation",
+    description: "Turning urban surplus clothes, household goods, and sanitary items into a catalyst for rural development and disaster relief across India.",
+    address: "J-93, Sarita Vihar, Institutional Area, New Delhi - 110076",
+    phone: "+91 11 2697 2351",
+    latitude: 28.7039,
+    longitude: 77.299,
+    verified: true,
+    urgentNeeds: [],
+  } as any,
+  {
+    id: "95448bd7-cac6-4e5d-8014-c394a06a4a62",
+    name: "Pratham Education Foundation",
+    description: "Innovative learning organization improving the quality of elementary education in India through community libraries and textbook drives.",
+    address: "Y.B. Chavan Centre, Gen. J. Bhosale Marg, Nariman Point, Mumbai - 400021",
+    phone: "+91 22 2281 9560",
+    latitude: 29.0339,
+    longitude: 77.629,
+    verified: true,
+    urgentNeeds: [],
+  } as any,
+];
+
 export const HomePage: React.FC = () => {
-  const [ngos, setNgos] = useState<NGOProfile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [ngos, setNgos] = useState<NGOProfile[]>(INITIAL_VERIFIED_NGOS);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     getVerifiedNgos()
-      .then((data: NGOProfile[]) => setNgos(data.slice(0, 3)))
-      .catch(() => setNgos([]))
+      .then((data: NGOProfile[]) => {
+        if (data && data.length > 0) {
+          setNgos(data.slice(0, 3));
+        }
+      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

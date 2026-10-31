@@ -50,14 +50,29 @@ function LocationPicker({ position, onLocationSelect }: { position: L.LatLngExpr
   );
 }
 
+const INITIAL_NGOS: NGOProfile[] = [
+  {
+    id: '6d72f778-6bc7-4127-83a1-2d3c00360022',
+    name: 'Akshaya Patra Foundation',
+    address: 'Chord Road, Rajajinagar, Bengaluru, Karnataka 560010',
+    verified: true,
+  } as any,
+  {
+    id: '61b0d97d-89e9-4d04-abcc-582c64f6f127',
+    name: 'Goonj Foundation',
+    address: 'J-93, Sarita Vihar, Institutional Area, New Delhi - 110076',
+    verified: true,
+  } as any,
+];
+
 export const CreateDonationPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedNgoId = searchParams.get('ngoId') || '';
   const { showSuccess, showError } = useToast();
 
-  const [ngos, setNgos] = useState<NGOProfile[]>([]);
-  const [loadingNgos, setLoadingNgos] = useState(true);
+  const [ngos, setNgos] = useState<NGOProfile[]>(INITIAL_NGOS);
+  const [loadingNgos, setLoadingNgos] = useState(false);
   
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [hasPromptedLocation, setHasPromptedLocation] = useState(false);
