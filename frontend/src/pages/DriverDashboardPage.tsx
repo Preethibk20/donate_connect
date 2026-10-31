@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getMyVolunteerTasks, getAvailablePickups, claimVolunteerPickup, updateVolunteerTaskStatus } from '../api/volunteerApi';
 import { Donation, PageResponse, VolunteerTask } from '../types';
 import { useToast } from '../context/ToastContext';
-import { Truck, CheckCircle2, MapPin, Calendar, Clock, RefreshCw, PackageSearch, ChevronRight, Navigation, Compass, XCircle, Check } from 'lucide-react';
+import { Truck, CheckCircle2, MapPin, Calendar, Clock, RefreshCw, PackageSearch, ChevronRight, Navigation, Compass, ExternalLink, XCircle, Check } from 'lucide-react';
 import { LiveLocationTracker } from '../components/LiveLocationTracker';
 
 type DashboardTab = 'my-tasks' | 'available';
@@ -218,11 +218,35 @@ export const DriverDashboardPage: React.FC = () => {
                     <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1.5">
                       <div className="flex items-start gap-1.5 text-slate-300">
                         <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
-                        <span><strong>Pickup:</strong> {task.donation.pickupAddress || 'Indiranagar 100ft Road, Bengaluru, Karnataka 560038'}</span>
+                        <span>
+                          <strong>Pickup:</strong>{' '}
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.donation.pickupAddress || 'JSS Academy of Technical Education, Bengaluru')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline hover:text-indigo-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            title="Open pickup address in Google Maps"
+                          >
+                            {task.donation.pickupAddress || 'Indiranagar 100ft Road, Bengaluru, Karnataka 560038'}
+                            <ExternalLink className="w-3 h-3 text-slate-500 inline shrink-0" />
+                          </a>
+                        </span>
                       </div>
                       <div className="flex items-start gap-1.5 text-slate-300">
                         <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                        <span><strong>Dropoff (NGO):</strong> {task.donation.ngo?.address || 'Chord Road, Rajajinagar, Bengaluru, Karnataka 560010'}</span>
+                        <span>
+                          <strong>Dropoff (NGO):</strong>{' '}
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.donation.ngo?.address || 'Chord Road, Rajajinagar, Bengaluru')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline hover:text-emerald-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            title="Open NGO address in Google Maps"
+                          >
+                            {task.donation.ngo?.address || 'Chord Road, Rajajinagar, Bengaluru, Karnataka 560010'}
+                            <ExternalLink className="w-3 h-3 text-slate-500 inline shrink-0" />
+                          </a>
+                        </span>
                       </div>
                       <div className="flex items-center gap-1.5 text-slate-300">
                         <Calendar className="w-3.5 h-3.5 text-amber-400" />

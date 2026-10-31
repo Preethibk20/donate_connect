@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sendLocationUpdate } from '../api/volunteerApi';
 import { useToast } from '../context/ToastContext';
-import { Navigation, AlertTriangle, StopCircle, Lock } from 'lucide-react';
+import { Navigation, AlertTriangle, StopCircle, Lock, Compass } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { Donation } from '../types';
 
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export const LiveLocationTracker: React.FC<Props> = ({ deliveryId, status, donation }) => {
+    const navigate = useNavigate();
     const [isSharing, setIsSharing] = useState(false);
     const [isSimulating, setIsSimulating] = useState(false);
     const [permissionError, setPermissionError] = useState('');
@@ -238,6 +240,15 @@ export const LiveLocationTracker: React.FC<Props> = ({ deliveryId, status, donat
                             </span>
                         )}
                     </div>
+                    {donation?.id && (
+                        <button
+                            onClick={() => navigate(`/track/${donation.id}`)}
+                            className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-bold rounded-xl transition-all flex justify-center items-center gap-1.5 shadow-md shadow-indigo-600/30 active:scale-95"
+                        >
+                            <Compass className="w-3.5 h-3.5 animate-spin text-indigo-200" style={{ animationDuration: '4s' }} />
+                            Open Live Moving Route & Map →
+                        </button>
+                    )}
                     
                     <button
                         onClick={stopTracking}
